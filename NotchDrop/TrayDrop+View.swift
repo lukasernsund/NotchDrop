@@ -1,12 +1,14 @@
 import SwiftUI
 import ColorfulX
 import UniformTypeIdentifiers
+import Pow
 
 struct TrayView: View {
     @StateObject var vm: NotchViewModel
     @StateObject var tvm = TrayDrop.shared
 
     @State private var targeting = false
+    @State private var trigger: UUID = .init()
 
     var storageTime: String {
         switch tvm.selectedFileStorageTime {
@@ -31,6 +33,7 @@ struct TrayView: View {
     var body: some View {
         panel
             .onDrop(of: [.data, .text], isTargeted: $targeting) { providers in
+                trigger = .init()
                 DispatchQueue.global().async {
                     handleDrop(providers)
                 }
@@ -70,8 +73,16 @@ struct TrayView: View {
     var panel: some View {
         ZStack {
             ColorfulView(
-                color: .constant(ColorfulPreset.starry.colors),
-                speed: .constant(0.5),
+                color: .init(get: {
+                    if targeting {
+                        ColorfulPreset.neon.colors
+                    } else {
+                        ColorfulPreset.starry.colors
+                    }
+                }, set: { _ in }),
+                speed: .init(get: {
+                    targeting ? 1.5 : 0.5
+                }, set: { _ in }),
                 transitionSpeed: .constant(25)
             )
             .opacity(0.5)
@@ -86,6 +97,13 @@ struct TrayView: View {
         }
         .animation(vm.animation, value: tvm.items)
         .animation(vm.animation, value: tvm.isLoading)
+        .changeEffect(
+            .spray(origin: UnitPoint(x: 0.5, y: 0.5)) {
+                Image(systemName: "arrow.down.doc")
+                    .foregroundStyle(.white)
+            },
+            value: trigger
+        )
     }
 
     var content: some View {

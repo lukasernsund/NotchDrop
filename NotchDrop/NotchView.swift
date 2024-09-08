@@ -142,19 +142,18 @@ struct NotchView: View {
             }
     }
 
-    @ViewBuilder
     var dragDetecter: some View {
-        if vm.status == .closed {
-            RoundedRectangle(cornerRadius: notchCornerRadius)
-                .foregroundStyle(Color.black.opacity(0.001)) // fuck you apple and 0.001 is the smallest we can have
-                .contentShape(Rectangle())
-                .frame(width: vm.deviceNotchRect.width + vm.dropDetectorRange, height: vm.deviceNotchRect.height + vm.dropDetectorRange)
-                .onDrop(of: [.data], isTargeted: $dropTargeting) { _ in true }
-                .onChange(of: dropTargeting) { newValue in if newValue {
-                    vm.notchOpen(.drag)
+        RoundedRectangle(cornerRadius: notchCornerRadius)
+            .foregroundStyle(Color.black.opacity(0.001))
+            .contentShape(Rectangle())
+            .frame(width: vm.deviceNotchRect.width + vm.dropDetectorRange, height: vm.deviceNotchRect.height + vm.dropDetectorRange)
+            .onDrop(of: [.data], isTargeted: $dropTargeting) { _ in true }
+            .onChange(of: dropTargeting) { newValue in
+                if newValue {
+                    vm.showDropPage()
                     vm.hapticSender.send()
-                } }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        }
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 }
