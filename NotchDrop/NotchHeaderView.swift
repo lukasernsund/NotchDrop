@@ -13,26 +13,40 @@ struct NotchHeaderView: View {
 
     var body: some View {
         HStack {
+            ToggleButton(title: "Drop", isSelected: vm.contentType == .drop) {
+                vm.switchPage(to: .drop)
+            }
+            ToggleButton(title: "Clipboard", isSelected: vm.contentType == .clipboard) {
+                vm.switchPage(to: .clipboard)
+            }
+            Spacer()
             Button(action: {
-                            vm.switchPage(to: .drop)
-                        }) {
-                            Text("Drop")
-                                .foregroundColor(vm.contentType == .drop ? .primary : .secondary)
-                        }
-                        Button(action: {
-                            vm.switchPage(to: .clipboard)
-                        }) {
-                            Text("Clipboard")
-                                .foregroundColor(vm.contentType == .clipboard ? .primary : .secondary)
-                        }
-                        Spacer()
-                        Image(systemName: "ellipsis")
-                            .onTapGesture {
-                                vm.contentType = .menu
-                            }
+                vm.contentType = .menu
+            }) {
+                Image(systemName: "ellipsis")
+            }
+            .buttonStyle(PlainButtonStyle())
         }
         .animation(vm.animation, value: vm.contentType)
         .font(.system(.headline, design: .rounded))
+    }
+}
+
+struct ToggleButton: View {
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .foregroundColor(isSelected ? .primary : .secondary)
+                .padding(.vertical, 5)
+                .padding(.horizontal, 10)
+                .background(isSelected ? Color.primary.opacity(0.1) : Color.clear)
+                .cornerRadius(8)
+        }
+        .buttonStyle(PlainButtonStyle())
     }
 }
 

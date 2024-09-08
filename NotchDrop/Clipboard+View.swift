@@ -1,4 +1,5 @@
 import SwiftUI
+import ColorfulX
 
 struct ClipboardView: View {
     @StateObject var vm: NotchViewModel
@@ -29,28 +30,24 @@ struct ClipboardView: View {
     }
 
     var panel: some View {
-        RoundedRectangle(cornerRadius: vm.cornerRadius)
-            .strokeBorder(style: StrokeStyle(lineWidth: 4, dash: [10]))
-            .foregroundStyle(.white.opacity(0.1))
-            .background(loading)
-            .overlay {
-                content
-                    .padding()
-            }
-            .animation(vm.animation, value: cvm.items)
-            .animation(vm.animation, value: cvm.isLoading)
-    }
-
-    var loading: some View {
-        RoundedRectangle(cornerRadius: vm.cornerRadius)
-            .foregroundStyle(.white.opacity(0.1))
-            .conditionalEffect(
-                .repeat(
-                    .glow(color: .blue, radius: 50),
-                    every: 1.5
-                ),
-                condition: cvm.isLoading > 0
+        ZStack {
+            ColorfulView(
+                color: .constant(ColorfulPreset.starry.colors),
+                speed: .constant(0.5),
+                transitionSpeed: .constant(25)
             )
+            .opacity(0.5)
+            .clipShape(RoundedRectangle(cornerRadius: vm.cornerRadius))
+
+            RoundedRectangle(cornerRadius: vm.cornerRadius)
+                .foregroundStyle(.white.opacity(0.1))
+                .overlay {
+                    content
+                        .padding()
+                }
+        }
+        .animation(vm.animation, value: cvm.items)
+        .animation(vm.animation, value: cvm.isLoading)
     }
 
     var text: String {

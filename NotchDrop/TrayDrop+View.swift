@@ -1,4 +1,6 @@
 import SwiftUI
+import ColorfulX
+import UniformTypeIdentifiers
 
 struct TrayView: View {
     @StateObject var vm: NotchViewModel
@@ -28,35 +30,62 @@ struct TrayView: View {
 
     var body: some View {
         panel
-            .onDrop(of: [.data], isTargeted: $targeting) { providers in
-                DispatchQueue.global().async { tvm.load(providers) }
+            .onDrop(of: [.data, .text], isTargeted: $targeting) { providers in
+                DispatchQueue.global().async {
+                    handleDrop(providers)
+                }
                 return true
             }
     }
 
-    var panel: some View {
-        RoundedRectangle(cornerRadius: vm.cornerRadius)
-            .strokeBorder(style: StrokeStyle(lineWidth: 4, dash: [10]))
-            .foregroundStyle(.white.opacity(0.1))
-            .background(loading)
-            .overlay {
-                content
-                    .padding()
+    private func handleDrop(_ providers: [NSItemProvider]) {
+        for provider in providers {
+            if provider.hasItemConformingToTypeIdentifier(UTType.text.identifier) {
+                provider.loadItem(forTypeIdentifier: UTType.text.identifier, options: nil) { item, _ in
+                    if let data = item as? Data, let string = String(data: data, encoding: .utf8) {
+                        let tempFile = saveTextToTempFile(string)
+                        tvm.load([NSItemProvider(contentsOf: tempFile)].compactMap { $0 })
+                    }
+                }
+            } else {
+                tvm.load([provider])
             }
-            .animation(vm.animation, value: tvm.items)
-            .animation(vm.animation, value: tvm.isLoading)
+        }
     }
 
-    var loading: some View {
-        RoundedRectangle(cornerRadius: vm.cornerRadius)
-            .foregroundStyle(.white.opacity(0.1))
-            .conditionalEffect(
-                .repeat(
-                    .glow(color: .blue, radius: 50),
-                    every: 1.5
-                ),
-                condition: tvm.isLoading > 0
+    private func saveTextToTempFile(_ text: String) -> URL {
+        let tempDir = FileManager.default.temporaryDirectory
+        let fileName = "temp_text_\(UUID().uuidString).txt"
+        let fileURL = tempDir.appendingPathComponent(fileName)
+        
+        do {
+            try text.write(to: fileURL, atomically: true, encoding: .utf8)
+            return fileURL
+        } catch {
+            print("Error saving text to temp file: \(error)")
+            return fileURL // Return the URL even if writing failed
+        }
+    }
+
+    var panel: some View {
+        ZStack {
+            ColorfulView(
+                color: .constant(ColorfulPreset.starry.colors),
+                speed: .constant(0.5),
+                transitionSpeed: .constant(25)
             )
+            .opacity(0.5)
+            .clipShape(RoundedRectangle(cornerRadius: vm.cornerRadius))
+
+            RoundedRectangle(cornerRadius: vm.cornerRadius)
+                .foregroundStyle(.white.opacity(0.1))
+                .overlay {
+                    content
+                        .padding()
+                }
+        }
+        .animation(vm.animation, value: tvm.items)
+        .animation(vm.animation, value: tvm.isLoading)
     }
 
     var content: some View {

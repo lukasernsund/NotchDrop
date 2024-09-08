@@ -11,6 +11,7 @@ struct NotchView: View {
     @StateObject var vm: NotchViewModel
 
     @State var dropTargeting: Bool = false
+    @State private var isHovering: Bool = false
 
     var notchSize: CGSize {
         switch vm.status {
@@ -70,6 +71,12 @@ struct NotchView: View {
         .animation(vm.animation, value: vm.status)
         .preferredColorScheme(.dark)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .onHover { hovering in
+            isHovering = hovering
+            if !hovering && vm.status == .opened {
+                vm.notchPop()
+            }
+        }
     }
 
     var notch: some View {

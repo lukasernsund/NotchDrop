@@ -7,7 +7,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "& Press Option to delete"
+            "value" : ""
           }
         },
         "zh-Hans" : {
@@ -293,9 +293,6 @@
         }
       }
     },
-    "Clipboard" : {
-
-    },
     "Copied items are kept for %@" : {
 
     },
@@ -350,7 +347,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Drag files here to keep them for"
+            "value" : "Drag and drop files"
           }
         },
         "zh-Hans" : {
@@ -366,9 +363,6 @@
           }
         }
       }
-    },
-    "Drop" : {
-
     },
     "English" : {
       "extractionState" : "manual",

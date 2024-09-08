@@ -14,24 +14,27 @@ struct NotchContentView: View {
 
     var body: some View {
         ZStack {
-            switch vm.contentType {
-            case .drop:
-                HStack(spacing: vm.spacing) {
-                    AirDropView(vm: vm)
-                    TrayView(vm: vm)
+            Group {
+                if vm.contentType == .drop {
+                    dropView
+                } else if vm.contentType == .clipboard {
+                    ClipboardView(vm: vm)
+                } else if vm.contentType == .menu {
+                    NotchMenuView(vm: vm)
+                } else if vm.contentType == .settings {
+                    NotchSettingsView(vm: vm)
                 }
-                .transition(.scale(scale: 0.8).combined(with: .opacity))
-            case .clipboard:
-                ClipboardView(vm: vm)
-            case .menu:
-                NotchMenuView(vm: vm)
-                    .transition(.scale(scale: 0.8).combined(with: .opacity))
-            case .settings:
-                NotchSettingsView(vm: vm)
-                    .transition(.scale(scale: 0.8).combined(with: .opacity))
             }
+            .transition(.scale(scale: 0.8).combined(with: .opacity))
         }
         .animation(vm.animation, value: vm.contentType)
+    }
+    
+    private var dropView: some View {
+        HStack(spacing: vm.spacing) {
+            AirDropView(vm: vm)
+            TrayView(vm: vm)
+        }
     }
 }
 

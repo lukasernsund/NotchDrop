@@ -56,9 +56,9 @@ struct ClipboardItemView: View {
                 .foregroundStyle(.red)
                 .background(Color.white.clipShape(Circle()).padding(1))
                 .frame(width: vm.spacing, height: vm.spacing)
-                .opacity(vm.optionKeyPressed ? 1 : 0)
-                .scaleEffect(vm.optionKeyPressed ? 1 : 0.5)
-                .animation(vm.animation, value: vm.optionKeyPressed)
+                .opacity(hover || vm.optionKeyPressed ? 1 : 0)
+                .scaleEffect(hover || vm.optionKeyPressed ? 1 : 0.5)
+                .animation(vm.animation, value: hover || vm.optionKeyPressed)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
                 .offset(x: vm.spacing / 2, y: -vm.spacing / 2)
                 .onTapGesture { cvm.delete(item.id) }
