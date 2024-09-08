@@ -45,6 +45,10 @@
 		50E26E292C3AF67B007CF247 /* TrayDrop+DropItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50E26E282C3AF67B007CF247 /* TrayDrop+DropItem.swift */; };
 		50EFDB522C3BF7B4002D3E0F /* Ext+NSImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50EFDB512C3BF7B4002D3E0F /* Ext+NSImage.swift */; };
 		60AD62872C579F4400299297 /* NotchSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60AD62862C579F4400299297 /* NotchSettingsView.swift */; };
+		814AE5552C8E4A3E00F324D5 /* Clipboard+ClipboardItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814AE5522C8E4A3E00F324D5 /* Clipboard+ClipboardItem.swift */; };
+		814AE5562C8E4A3E00F324D5 /* Clipboard+ItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814AE5532C8E4A3E00F324D5 /* Clipboard+ItemView.swift */; };
+		814AE5572C8E4A3E00F324D5 /* Clipboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814AE5512C8E4A3E00F324D5 /* Clipboard.swift */; };
+		814AE5582C8E4A3E00F324D5 /* Clipboard+View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814AE5542C8E4A3E00F324D5 /* Clipboard+View.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -81,6 +85,10 @@
 		50E26E282C3AF67B007CF247 /* TrayDrop+DropItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TrayDrop+DropItem.swift"; sourceTree = "<group>"; };
 		50EFDB512C3BF7B4002D3E0F /* Ext+NSImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Ext+NSImage.swift"; sourceTree = "<group>"; };
 		60AD62862C579F4400299297 /* NotchSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchSettingsView.swift; sourceTree = "<group>"; };
+		814AE5512C8E4A3E00F324D5 /* Clipboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Clipboard.swift; sourceTree = "<group>"; };
+		814AE5522C8E4A3E00F324D5 /* Clipboard+ClipboardItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Clipboard+ClipboardItem.swift"; sourceTree = "<group>"; };
+		814AE5532C8E4A3E00F324D5 /* Clipboard+ItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Clipboard+ItemView.swift"; sourceTree = "<group>"; };
+		814AE5542C8E4A3E00F324D5 /* Clipboard+View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Clipboard+View.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -133,6 +141,10 @@
 				504381982C3A8893000ED325 /* NotchWindow.swift */,
 				504381A32C3A8C7E000ED325 /* NotchWindowController.swift */,
 				5043819F2C3A8BA1000ED325 /* NotchView.swift */,
+				814AE5512C8E4A3E00F324D5 /* Clipboard.swift */,
+				814AE5522C8E4A3E00F324D5 /* Clipboard+ClipboardItem.swift */,
+				814AE5532C8E4A3E00F324D5 /* Clipboard+ItemView.swift */,
+				814AE5542C8E4A3E00F324D5 /* Clipboard+View.swift */,
 				504381B02C3AE0B6000ED325 /* NotchHeaderView.swift */,
 				503D8EB92C3F838200E173FF /* NotchMenuView.swift */,
 				504381AE2C3ADFF2000ED325 /* NotchContentView.swift */,
@@ -275,6 +287,10 @@
 				502E41D62C3CEC990060660E /* Ext+NSAlert.swift in Sources */,
 				504381A62C3A8CFD000ED325 /* NotchViewController.swift in Sources */,
 				504381AA2C3A9514000ED325 /* EventMonitor.swift in Sources */,
+				814AE5552C8E4A3E00F324D5 /* Clipboard+ClipboardItem.swift in Sources */,
+				814AE5562C8E4A3E00F324D5 /* Clipboard+ItemView.swift in Sources */,
+				814AE5572C8E4A3E00F324D5 /* Clipboard.swift in Sources */,
+				814AE5582C8E4A3E00F324D5 /* Clipboard+View.swift in Sources */,
 				501F0E8C2C59E6BD00F0113C /* Language.swift in Sources */,
 				5043819B2C3A8A06000ED325 /* AppDelegate.swift in Sources */,
 				504381932C3A8755000ED325 /* main.swift in Sources */,
@@ -419,7 +435,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 21;
-				DEVELOPMENT_TEAM = 964G86XT2P;
+				DEVELOPMENT_TEAM = 4M7MTM5VDM;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -433,7 +449,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 2.6;
-				PRODUCT_BUNDLE_IDENTIFIER = wiki.qaq.NotchDrop;
+				PRODUCT_BUNDLE_IDENTIFIER = lukas.notchify.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -450,7 +466,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 21;
-				DEVELOPMENT_TEAM = 964G86XT2P;
+				DEVELOPMENT_TEAM = 4M7MTM5VDM;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -464,7 +480,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 2.6;
-				PRODUCT_BUNDLE_IDENTIFIER = wiki.qaq.NotchDrop;
+				PRODUCT_BUNDLE_IDENTIFIER = lukas.notchify.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;

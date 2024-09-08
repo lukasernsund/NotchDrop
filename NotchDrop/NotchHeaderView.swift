@@ -13,14 +13,23 @@ struct NotchHeaderView: View {
 
     var body: some View {
         HStack {
-            Text(
-                vm.contentType == .settings
-                    ? "Version: \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown") (Build: \(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "Unknown"))"
-                    : "Notch Drop"
-            )
-            .contentTransition(.numericText())
-            Spacer()
-            Image(systemName: "ellipsis")
+            Button(action: {
+                            vm.switchPage(to: .drop)
+                        }) {
+                            Text("Drop")
+                                .foregroundColor(vm.contentType == .drop ? .primary : .secondary)
+                        }
+                        Button(action: {
+                            vm.switchPage(to: .clipboard)
+                        }) {
+                            Text("Clipboard")
+                                .foregroundColor(vm.contentType == .clipboard ? .primary : .secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "ellipsis")
+                            .onTapGesture {
+                                vm.contentType = .menu
+                            }
         }
         .animation(vm.animation, value: vm.contentType)
         .font(.system(.headline, design: .rounded))

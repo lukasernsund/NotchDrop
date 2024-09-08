@@ -40,7 +40,8 @@ class NotchViewModel: NSObject, ObservableObject {
     }
 
     enum ContentType: Int, Codable, Hashable, Equatable {
-        case normal
+        case drop
+        case clipboard
         case menu
         case settings
     }
@@ -65,7 +66,7 @@ class NotchViewModel: NSObject, ObservableObject {
 
     @Published private(set) var status: Status = .closed
     @Published var openReason: OpenReason = .unknown
-    @Published var contentType: ContentType = .normal
+    @Published var contentType: ContentType = .drop
 
     @Published var spacing: CGFloat = 16
     @Published var cornerRadius: CGFloat = 16
@@ -78,17 +79,18 @@ class NotchViewModel: NSObject, ObservableObject {
     var selectedLanguage: Language
 
     let hapticSender = PassthroughSubject<Void, Never>()
+    
+    @Published var clipboardItems: [ClipboardItem] = []
+
 
     func notchOpen(_ reason: OpenReason) {
         openReason = reason
         status = .opened
-        contentType = .normal
     }
 
     func notchClose() {
         openReason = .unknown
         status = .closed
-        contentType = .normal
     }
 
     func showSettings() {
@@ -99,4 +101,56 @@ class NotchViewModel: NSObject, ObservableObject {
         openReason = .unknown
         status = .popping
     }
+    func switchPage(to page: ContentType) {
+            contentType = page
+        }
+
+        private func setupClipboardMonitoring() {
+            Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+                self?.checkClipboardChanges()
+            }
+        }
+
+        private func checkClipboardChanges() {
+            let pasteboard = NSPasteboard.general
+            if pasteboard.changeCount != UserDefaults.standard.integer(forKey: "LastPasteboardChangeCount") {
+                UserDefaults.standard.set(pasteboard.changeCount, forKey: "LastPasteboardChangeCount")
+                updateClipboardItems()
+            }
+        }
+
+        private func updateClipboardItems() {
+            let pasteboard = NSPasteboard.general
+            if let string = pasteboard.string(forType: .string) {
+                let newItem = ClipboardItem(content: .text(string))
+                DispatchQueue.main.async {
+                    self.clipboardItems.insert(newItem, at: 0)
+                    self.trimClipboardItems()
+                }
+            } else if let image = pasteboard.data(forType: .tiff).flatMap(NSImage.init(data:)) {
+                let newItem = ClipboardItem(content: .image(image))
+                DispatchQueue.main.async {
+                    self.clipboardItems.insert(newItem, at: 0)
+                    self.trimClipboardItems()
+                }
+            }
+        }
+
+        private func trimClipboardItems() {
+            if clipboardItems.count > 10 {
+                clipboardItems = Array(clipboardItems.prefix(10))
+            }
+        }
+    }
+
+    struct ClipboardItem: Identifiable {
+        let id = UUID()
+        let content: ClipboardContent
+        let timestamp = Date()
+    }
+
+    enum ClipboardContent {
+        case text(String)
+        case image(NSImage)
+    
 }

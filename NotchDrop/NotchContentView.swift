@@ -15,12 +15,14 @@ struct NotchContentView: View {
     var body: some View {
         ZStack {
             switch vm.contentType {
-            case .normal:
+            case .drop:
                 HStack(spacing: vm.spacing) {
                     AirDropView(vm: vm)
                     TrayView(vm: vm)
                 }
                 .transition(.scale(scale: 0.8).combined(with: .opacity))
+            case .clipboard:
+                ClipboardView(vm: vm)
             case .menu:
                 NotchMenuView(vm: vm)
                     .transition(.scale(scale: 0.8).combined(with: .opacity))

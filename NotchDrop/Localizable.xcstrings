@@ -293,6 +293,12 @@
         }
       }
     },
+    "Clipboard" : {
+
+    },
+    "Copied items are kept for %@" : {
+
+    },
     "Custom" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -360,6 +366,9 @@
           }
         }
       }
+    },
+    "Drop" : {
+
     },
     "English" : {
       "extractionState" : "manual",
@@ -700,6 +709,7 @@
       }
     },
     "Notch Drop" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -764,6 +774,9 @@
           }
         }
       }
+    },
+    "Press Option to delete" : {
+
     },
     "Settings" : {
       "localizations" : {
@@ -923,6 +936,7 @@
       }
     },
     "Version: %@ (Build: %@)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
