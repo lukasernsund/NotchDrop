@@ -296,6 +296,9 @@
     "Copied items are kept for %@" : {
 
     },
+    "Copy" : {
+
+    },
     "Custom" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -340,6 +343,9 @@
           }
         }
       }
+    },
+    "Delete" : {
+
     },
     "Drag files here to keep them for" : {
       "extractionState" : "manual",
@@ -772,6 +778,9 @@
     "Press Option to delete" : {
 
     },
+    "Search" : {
+
+    },
     "Settings" : {
       "localizations" : {
         "en" : {
@@ -793,6 +802,9 @@
           }
         }
       }
+    },
+    "Show more" : {
+
     },
     "Simplified Chinese" : {
       "extractionState" : "manual",

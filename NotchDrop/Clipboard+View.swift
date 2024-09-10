@@ -1,9 +1,11 @@
 import SwiftUI
 import ColorfulX
+import UniformTypeIdentifiers
 
 struct ClipboardView: View {
     @StateObject var vm: NotchViewModel
     @StateObject var cvm = Clipboard.shared
+    @State private var searchText = ""
 
     var storageTime: String {
         switch cvm.selectedFileStorageTime {
@@ -22,6 +24,17 @@ struct ClipboardView: View {
         case .custom:
             let localizedTimeUnit = NSLocalizedString(cvm.customStorageTimeUnit.localized.lowercased(), comment: "")
             return "\(cvm.customStorageTime) \(localizedTimeUnit)"
+        }
+    }
+
+    var filteredItems: [Clipboard.ClipboardItem] {
+        if searchText.isEmpty {
+            return Array(cvm.items)
+        } else {
+            return cvm.items.filter { item in
+                item.fileName.localizedCaseInsensitiveContains(searchText) ||
+                item.previewText.localizedCaseInsensitiveContains(searchText)
+            }
         }
     }
 
@@ -62,26 +75,68 @@ struct ClipboardView: View {
     }
 
     var content: some View {
-        Group {
-            if cvm.isEmpty {
-                VStack(spacing: 8) {
-                    Image(systemName: "doc.on.clipboard")
-                    Text(text)
-                        .multilineTextAlignment(.center)
-                        .font(.system(.headline, design: .rounded))
-                }
+        VStack {
+            searchBar
+            if filteredItems.isEmpty {
+                emptyView
             } else {
-                ScrollView(.horizontal) {
-                    HStack(spacing: vm.spacing) {
-                        ForEach(cvm.items) { item in
-                            ClipboardItemView(item: item, vm: vm, cvm: cvm)
+                itemList
+            }
+        }
+    }
+
+    var searchBar: some View {
+        HStack {
+            Image(systemName: "magnifyingglass")
+            TextField("Search", text: $searchText)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+        }
+        .padding(.bottom, 8)
+    }
+
+    var emptyView: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "doc.on.clipboard")
+            Text(text)
+                .multilineTextAlignment(.center)
+                .font(.system(.headline, design: .rounded))
+        }
+    }
+
+    var itemList: some View {
+        ScrollView(.horizontal) {
+            HStack(spacing: vm.spacing) {
+                ForEach(filteredItems.prefix(10)) { item in
+                    ClipboardItemView(item: item, vm: vm, cvm: cvm)
+                }
+                if filteredItems.count > 10 {
+                    Button(action: openFileLocation) {
+                        VStack {
+                            Image(systemName: "ellipsis.circle")
+                            Text("Show more")
                         }
                     }
-                    .padding(vm.spacing)
+                    .buttonStyle(.plain)
+                    .padding(8)
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(8)
                 }
-                .padding(-vm.spacing)
-                .scrollIndicators(.never)
             }
+            .padding(vm.spacing)
+        }
+        .padding(-vm.spacing)
+        .scrollIndicators(.never)
+    }
+
+    func openFileLocation() {
+        let fileManager = FileManager.default
+        let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let clipboardItemsURL = documentsURL.appendingPathComponent(Clipboard.ClipboardItem.mainDir)
+        
+        if fileManager.fileExists(atPath: clipboardItemsURL.path) {
+            NSWorkspace.shared.open(clipboardItemsURL)
+        } else {
+            print("Error: Clipboard items directory not found")
         }
     }
 }
@@ -89,7 +144,7 @@ struct ClipboardView: View {
 #Preview {
     ClipboardView(vm: .init())
         .padding()
-        .frame(width: 550, height: 150, alignment: .center)
+        .frame(width: 550, height: 200, alignment: .center)
         .background(.black)
         .preferredColorScheme(.dark)
 }
