@@ -33,14 +33,14 @@ extension Clipboard {
             } else if ["png", "jpg", "jpeg", "gif"].contains(url.pathExtension.lowercased()) {
                 itemType = .image
                 if let image = NSImage(contentsOf: url) {
-                    workspacePreviewImageData = image.pngRepresentation
+                    workspacePreviewImageData = Self.compressAndResizeImage(image)
                 } else {
                     workspacePreviewImageData = NSWorkspace.shared.icon(forFileType: url.pathExtension).pngRepresentation
                 }
                 previewText = ""
             } else {
                 itemType = .file
-                workspacePreviewImageData = url.snapshotPreview().pngRepresentation
+                workspacePreviewImageData = Self.compressAndResizeImage(url.snapshotPreview())
                 previewText = ""
             }
 
@@ -49,6 +49,35 @@ extension Clipboard {
                 withIntermediateDirectories: true
             )
             try FileManager.default.copyItem(at: url, to: storageURL)
+        }
+
+        static func compressAndResizeImage(_ image: NSImage) -> Data {
+            let maxSize: CGFloat = 128 // Max width or height
+            let aspectRatio = image.size.width / image.size.height
+            let newSize: NSSize
+
+            if image.size.width > maxSize || image.size.height > maxSize {
+                if aspectRatio > 1 {
+                    newSize = NSSize(width: maxSize, height: maxSize / aspectRatio)
+                } else {
+                    newSize = NSSize(width: maxSize * aspectRatio, height: maxSize)
+                }
+            } else {
+                newSize = image.size // Keep original size if it's already smaller
+            }
+
+            let resizedImage = NSImage(size: newSize)
+            resizedImage.lockFocus()
+            NSGraphicsContext.current?.imageInterpolation = .high
+            image.draw(in: NSRect(origin: .zero, size: newSize))
+            resizedImage.unlockFocus()
+
+            guard let tiffData = resizedImage.tiffRepresentation,
+                  let bitmapImage = NSBitmapImageRep(data: tiffData) else {
+                return Data()
+            }
+
+            return bitmapImage.representation(using: .png, properties: [:]) ?? Data()
         }
     }
 }
@@ -64,7 +93,25 @@ extension Clipboard.ClipboardItem {
     }
 
     var workspacePreviewImage: NSImage {
-        .init(data: workspacePreviewImageData) ?? .init()
+        guard let image = NSImage(data: workspacePreviewImageData) else {
+            return NSImage()
+        }
+        let aspectRatio = image.size.width / image.size.height
+        let newSize: NSSize
+        if aspectRatio > 1 {
+            newSize = NSSize(width: 64, height: 64 / aspectRatio)
+        } else {
+            newSize = NSSize(width: 64 * aspectRatio, height: 64)
+        }
+        let resizedImage = NSImage(size: newSize)
+        resizedImage.lockFocus()
+        NSGraphicsContext.current?.imageInterpolation = .high
+        image.draw(in: NSRect(origin: .zero, size: newSize),
+                   from: NSRect(origin: .zero, size: image.size),
+                   operation: .sourceOver,
+                   fraction: 1.0)
+        resizedImage.unlockFocus()
+        return resizedImage
     }
 
     var shouldClean: Bool {
