@@ -12,7 +12,7 @@ extension Clipboard {
         let itemType: ItemType
         let previewText: String
 
-        enum ItemType: String, Codable {
+        enum ItemType: String, Codable, CaseIterable {
             case file
             case text
             case image

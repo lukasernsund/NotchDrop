@@ -124,7 +124,7 @@ class NotchViewModel: NSObject, ObservableObject {
     private func updateNotchSize() {
         switch contentType {
         case .clipboard:
-            notchOpenedSize = .init(width: 600, height: 270)
+            notchOpenedSize = .init(width: 600, height: 300)
         default:
             notchOpenedSize = .init(width: 600, height: 160)
         }

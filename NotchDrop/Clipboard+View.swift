@@ -7,6 +7,7 @@ struct ClipboardView: View {
     @ObservedObject var cvm: Clipboard
     @State private var searchText = ""
     @State private var scrollProxy: ScrollViewProxy?
+    @State private var selectedFilters: Set<Clipboard.ClipboardItem.ItemType> = []
 
     var storageTime: String {
         switch cvm.selectedFileStorageTime {
@@ -29,23 +30,50 @@ struct ClipboardView: View {
     }
 
     var filteredItems: [Clipboard.ClipboardItem] {
-        if searchText.isEmpty {
-            return Array(cvm.items)
-        } else {
-            return cvm.items.filter { item in
+        cvm.items.filter { item in
+            let matchesSearch = searchText.isEmpty ||
                 item.fileName.localizedCaseInsensitiveContains(searchText) ||
                 item.previewText.localizedCaseInsensitiveContains(searchText)
-            }
+            
+            let matchesFilter = selectedFilters.isEmpty || selectedFilters.contains(item.itemType)
+            
+            return matchesSearch && matchesFilter
         }
     }
 
     var body: some View {
         VStack(spacing: 0) {
-            searchBar
-                .padding(.horizontal, vm.spacing)
-                .padding(.vertical, vm.spacing / 4) // Reduced vertical padding
-                .background(Color.black)
-            
+            HStack(spacing: 0) {
+                Text("Clipboard")
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .padding(.leading, vm.spacing)
+                    .padding(.vertical, vm.spacing / 4)
+                
+                Spacer()
+                
+                Button {
+                    cvm.removeAll()
+                } label: {
+                    Image(systemName: "trash")
+                        .font(.title2)
+                        .padding(.trailing, vm.spacing)
+                        .padding(.vertical, vm.spacing / 4)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            HStack(spacing: 0) {
+                searchBar
+                    .padding(.leading, vm.spacing)
+                    .padding(.vertical, vm.spacing / 4)
+                
+                Spacer() // This will push the search bar and filter options to the edges
+                
+                filterOptions
+                    .padding(.trailing, vm.spacing)
+                    .padding(.vertical, vm.spacing / 4)
+            }
+            .background(Color.black)
             panel
         }
     }
@@ -67,8 +95,6 @@ struct ClipboardView: View {
                 }
         }
         .frame(height: 152)
-        .animation(vm.animation, value: cvm.items)
-        .animation(vm.animation, value: cvm.isLoading)
         .onChange(of: vm.shouldScrollClipboardToStart) { newValue in
             if newValue {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -107,6 +133,36 @@ struct ClipboardView: View {
                 .textFieldStyle(PlainTextFieldStyle())
         }
         .padding(.vertical, 8)
+        .padding(.horizontal, 12)
+        .background(Color.white.opacity(0.1))
+        .cornerRadius(8)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+        )
+        .frame(width: 300)
+    }
+
+    var filterOptions: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(Clipboard.ClipboardItem.ItemType.allCases, id: \.self) { type in
+                    FilterChip(
+                        title: type.rawValue.capitalized,
+                        isSelected: selectedFilters.contains(type),
+                        color: colorForType(type),
+                        action: {
+                            if selectedFilters.contains(type) {
+                                selectedFilters.remove(type)
+                            } else {
+                                selectedFilters.insert(type)
+                            }
+                        }
+                    )
+                }
+            }
+            .frame(width: 200)
+        }
     }
 
     var emptyView: some View {
@@ -132,7 +188,7 @@ struct ClipboardView: View {
             }
             .background(Color.white.opacity(0.1))
             .cornerRadius(vm.cornerRadius)
-            .frame(height: 180) // Increased height to fit items without overflow
+            .frame(height: 180)
             .scrollIndicators(.never)
             .onAppear {
                 scrollProxy = proxy
@@ -144,6 +200,37 @@ struct ClipboardView: View {
         withAnimation {
             scrollProxy?.scrollTo(filteredItems.first?.id, anchor: .leading)
         }
+    }
+
+    func colorForType(_ type: Clipboard.ClipboardItem.ItemType) -> Color {
+        switch type {
+        case .file:
+            return .blue
+        case .text:
+            return .green
+        case .image:
+            return .orange
+        }
+    }
+}
+
+struct FilterChip: View {
+    let title: String
+    let isSelected: Bool
+    let color: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.caption)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 4)
+                .background(isSelected ? color.opacity(0.2) : Color.gray.opacity(0.1))
+                .foregroundColor(isSelected ? color : .primary.opacity(0.5))
+                .cornerRadius(12)
+        }
+        .buttonStyle(PlainButtonStyle())
     }
 }
 

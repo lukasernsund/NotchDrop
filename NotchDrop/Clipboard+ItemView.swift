@@ -11,18 +11,46 @@ struct ClipboardItemView: View {
     @State private var isHovered = false
 
     private let itemSize: CGFloat = 120
+    private let cornerRadius: CGFloat = 8
 
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
+            Spacer()
             itemPreview
+            Spacer()
             itemInfo
         }
         .padding(8)
         .frame(width: itemSize, height: itemSize)
         .background(Color.gray.opacity(0.2))
-        .cornerRadius(8)
+        .cornerRadius(cornerRadius)
         .overlay(
-            RoundedRectangle(cornerRadius: 8)
+            GeometryReader { geometry in
+                let color = colorForType(item.itemType)
+                Path { path in
+                    let rect = CGRect(origin: .zero, size: geometry.size)
+                    path.move(to: CGPoint(x: cornerRadius, y: 0))
+                    path.addLine(to: CGPoint(x: rect.maxX, y: 0))
+                    path.addLine(to: CGPoint(x: 0, y: rect.maxY))
+                    path.addLine(to: CGPoint(x: 0, y: cornerRadius))
+                    path.addArc(center: CGPoint(x: cornerRadius, y: cornerRadius),
+                                radius: cornerRadius,
+                                startAngle: .degrees(180),
+                                endAngle: .degrees(270),
+                                clockwise: false)
+                }
+                .stroke(
+                    LinearGradient(
+                        gradient: Gradient(colors: [color, color.opacity(0)]),
+                        startPoint: .topLeading,
+                        endPoint: UnitPoint(x: 0.3, y: 0.3)
+                    ),
+                    lineWidth: 2
+                )
+            }
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: cornerRadius)
                 .stroke(Color.white.opacity(isHovered ? 0.5 : 0), lineWidth: 2)
         )
         .onHover { hovering in
@@ -42,10 +70,6 @@ struct ClipboardItemView: View {
             }
         }
         .contentShape(Rectangle())
-        .transition(.asymmetric(
-            insertion: .opacity.combined(with: .scale),
-            removal: .movingParts.poof
-        ))
         .scaleEffect(isHovered ? 1.05 : 1.0)
         .animation(vm.animation, value: isHovered)
         .onDrag { NSItemProvider(contentsOf: item.storageURL) ?? .init() }
@@ -78,30 +102,30 @@ struct ClipboardItemView: View {
             case .text:
                 Text(item.previewText)
                     .lineLimit(3)
-                    .frame(width: itemSize - 16, height: 60)
+                    .frame(width: itemSize - 16, alignment: .center)
             case .image:
                 Image(nsImage: item.workspacePreviewImage)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: itemSize - 16, height: 60)
+                    .frame(width: itemSize - 16, height: 50)
             case .file:
                 if let contentType = UTType(filenameExtension: URL(fileURLWithPath: item.fileName).pathExtension) {
                     Image(nsImage: NSWorkspace.shared.icon(for: contentType))
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(width: 60, height: 60)
+                        .frame(width: 50, height: 50)
                 } else {
                     Image(systemName: "doc")
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(width: 60, height: 60)
+                        .frame(width: 50, height: 50)
                 }
             }
         }
     }
 
     var itemInfo: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 2) {
             Text(item.fileName)
                 .font(.caption)
                 .lineLimit(1)
@@ -131,8 +155,13 @@ struct ClipboardItemView: View {
     func formattedDate(_ date: Date) -> String {
         let calendar = Calendar.current
         let now = Date()
+        let components = calendar.dateComponents([.minute, .hour, .day], from: date, to: now)
         
-        if calendar.isDateInToday(date) {
+        if let minutes = components.minute, minutes < 1 {
+            return "Just now"
+        } else if let minutes = components.minute, minutes < 60 {
+            return "\(minutes) minute\(minutes == 1 ? "" : "s") ago"
+        } else if calendar.isDateInToday(date) {
             let formatter = DateFormatter()
             formatter.dateFormat = "HH:mm"
             return formatter.string(from: date)
@@ -144,6 +173,17 @@ struct ClipboardItemView: View {
             let formatter = DateFormatter()
             formatter.dateFormat = "MMM d, yyyy"
             return formatter.string(from: date)
+        }
+    }
+
+    func colorForType(_ type: Clipboard.ClipboardItem.ItemType) -> Color {
+        switch type {
+        case .file:
+            return .blue
+        case .text:
+            return .green
+        case .image:
+            return .orange
         }
     }
 }

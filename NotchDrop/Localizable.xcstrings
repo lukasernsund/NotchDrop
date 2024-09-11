@@ -293,6 +293,9 @@
         }
       }
     },
+    "Clipboard" : {
+
+    },
     "Copied items are kept for %@" : {
 
     },
