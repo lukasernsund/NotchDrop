@@ -72,9 +72,16 @@ struct NotchView: View {
         .preferredColorScheme(.dark)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .onHover { hovering in
+            guard vm.status == .opened else {
+                return  // Ensure logic runs only when notch is opened
+            }
             isHovering = hovering
-            if !hovering && vm.status == .opened {
-                vm.notchPop()
+            if !hovering {
+                // Check if the mouse is genuinely outside the notch's bounds
+                let mouseLocation = NSEvent.mouseLocation
+                if !NSPointInRect(mouseLocation, NSRect(x: 0, y: 0, width: notchSize.width, height: notchSize.height)) {
+                    vm.notchPop()
+                }
             }
         }
     }

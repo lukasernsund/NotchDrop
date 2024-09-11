@@ -23,18 +23,12 @@ extension NotchViewModel {
                     // touch outside, close
                     if !notchOpenedRect.contains(mouseLocation) {
                         notchClose()
-                        // click where user open the panel
+                    // click where user open the panel
                     } else if deviceNotchRect.insetBy(dx: inset, dy: inset).contains(mouseLocation) {
                         notchClose()
-                        // for the same height as device notch, open the url of project
                     } else if headlineOpenedRect.contains(mouseLocation) {
-                        // for clicking headline which mouse event may handled by another app
-                        // open the menu
-                        if let nextValue = ContentType(rawValue: contentType.rawValue + 1) {
-                            contentType = nextValue
-                        } else {
-                            contentType = ContentType(rawValue: 0)!
-                        }
+                        // Handle header tap without changing the page
+                        handleHeaderTap()
                     }
                 case .closed, .popping:
                     // touch inside, open
@@ -116,5 +110,10 @@ extension NotchViewModel {
     func destroy() {
         cancellables.forEach { $0.cancel() }
         cancellables.removeAll()
+    }
+
+    private func handleHeaderTap() {
+        // Implement any desired behavior for header tap without changing the page
+        // For example, you could trigger a visual feedback or perform a different action
     }
 }
