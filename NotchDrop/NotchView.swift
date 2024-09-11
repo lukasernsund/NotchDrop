@@ -87,10 +87,12 @@ struct NotchView: View {
                 width: notchSize.width + notchCornerRadius * 2,
                 height: notchSize.height
             )
+            .padding(.bottom, 20) // Added padding to avoid shadow cutoff
             .shadow(
                 color: .black.opacity(([.opened, .popping].contains(vm.status)) ? 1 : 0),
                 radius: 16
             )
+            .animation(vm.animation, value: notchSize) // Add animation for size changes
     }
 
     var notchBackgroundMaskGroup: some View {

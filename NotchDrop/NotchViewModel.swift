@@ -24,7 +24,7 @@ class NotchViewModel: NSObject, ObservableObject {
         extraBounce: 0.25,
         blendDuration: 0.125
     )
-    let notchOpenedSize: CGSize = .init(width: 600, height: 160)
+    @Published var notchOpenedSize: CGSize = .init(width: 600, height: 160)
     let dropDetectorRange: CGFloat = 32
 
     enum Status: String, Codable, Hashable, Equatable {
@@ -67,7 +67,11 @@ class NotchViewModel: NSObject, ObservableObject {
 
     @Published private(set) var status: Status = .closed
     @Published var openReason: OpenReason = .unknown
-    @Published var contentType: ContentType = .drop
+    @Published var contentType: ContentType = .drop {
+        didSet {
+            updateNotchSize()
+        }
+    }
 
     @Published var spacing: CGFloat = 16
     @Published var cornerRadius: CGFloat = 16
@@ -83,14 +87,13 @@ class NotchViewModel: NSObject, ObservableObject {
     
     @Published var clipboardItems: [ClipboardItem] = []
     
-    // New property to trigger scroll
     @Published var shouldScrollClipboardToStart: Bool = false
 
     func notchOpen(_ reason: OpenReason) {
         openReason = reason
         status = .opened
-        // Trigger scroll when notch is opened
         shouldScrollClipboardToStart = true
+        updateNotchSize()
     }
 
     func notchClose() {
@@ -115,6 +118,15 @@ class NotchViewModel: NSObject, ObservableObject {
         contentType = .drop
         if status != .opened {
             notchOpen(.drag)
+        }
+    }
+
+    private func updateNotchSize() {
+        switch contentType {
+        case .clipboard:
+            notchOpenedSize = .init(width: 600, height: 270)
+        default:
+            notchOpenedSize = .init(width: 600, height: 160)
         }
     }
 

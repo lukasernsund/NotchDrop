@@ -19,7 +19,8 @@ struct NotchContentView: View {
                 if vm.contentType == .drop {
                     dropView
                 } else if vm.contentType == .clipboard {
-                    ClipboardView(vm: vm, cvm: cvm)
+                    ClipboardView(vm: vm, cvm: Clipboard.shared)
+                        .frame(height: .infinity) // Ensure it uses the full height
                 } else if vm.contentType == .menu {
                     NotchMenuView(vm: vm)
                 } else if vm.contentType == .settings {

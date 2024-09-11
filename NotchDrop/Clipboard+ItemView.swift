@@ -35,6 +35,11 @@ struct ClipboardItemView: View {
             Button("Delete") {
                 cvm.delete(item.id)
             }
+            if item.itemType == .file || item.itemType == .image {
+                ShareLink(item: item.storageURL) {
+                    Text("Share")
+                }
+            }
         }
         .contentShape(Rectangle())
         .transition(.asymmetric(

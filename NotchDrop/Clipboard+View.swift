@@ -40,7 +40,14 @@ struct ClipboardView: View {
     }
 
     var body: some View {
-        panel
+        VStack(spacing: 0) {
+            searchBar
+                .padding(.horizontal, vm.spacing)
+                .padding(.vertical, vm.spacing / 4) // Reduced vertical padding
+                .background(Color.black)
+            
+            panel
+        }
     }
 
     var panel: some View {
@@ -57,9 +64,9 @@ struct ClipboardView: View {
                 .foregroundStyle(.white.opacity(0.1))
                 .overlay {
                     content
-                        .padding()
                 }
         }
+        .frame(height: 152)
         .animation(vm.animation, value: cvm.items)
         .animation(vm.animation, value: cvm.isLoading)
         .onChange(of: vm.shouldScrollClipboardToStart) { newValue in
@@ -84,8 +91,7 @@ struct ClipboardView: View {
     }
 
     var content: some View {
-        VStack {
-            searchBar
+        Group {
             if filteredItems.isEmpty {
                 emptyView
             } else {
@@ -98,9 +104,9 @@ struct ClipboardView: View {
         HStack {
             Image(systemName: "magnifyingglass")
             TextField("Search", text: $searchText)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .textFieldStyle(PlainTextFieldStyle())
         }
-        .padding(.bottom, 8)
+        .padding(.vertical, 8)
     }
 
     var emptyView: some View {
@@ -110,6 +116,7 @@ struct ClipboardView: View {
                 .multilineTextAlignment(.center)
                 .font(.system(.headline, design: .rounded))
         }
+        .padding(vm.spacing)
     }
 
     var itemList: some View {
@@ -123,7 +130,9 @@ struct ClipboardView: View {
                 }
                 .padding(vm.spacing)
             }
-            .padding(-vm.spacing)
+            .background(Color.white.opacity(0.1))
+            .cornerRadius(vm.cornerRadius)
+            .frame(height: 180) // Increased height to fit items without overflow
             .scrollIndicators(.never)
             .onAppear {
                 scrollProxy = proxy
@@ -142,7 +151,7 @@ struct ClipboardView_Previews: PreviewProvider {
     static var previews: some View {
         ClipboardView(vm: NotchViewModel(), cvm: Clipboard.shared)
             .padding()
-            .frame(width: 550, height: 200, alignment: .center)
+            .frame(width: 550, height: 230, alignment: .center)
             .background(.black)
             .preferredColorScheme(.dark)
     }
