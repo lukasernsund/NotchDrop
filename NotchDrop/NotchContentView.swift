@@ -11,6 +11,7 @@ import UniformTypeIdentifiers
 
 struct NotchContentView: View {
     @StateObject var vm: NotchViewModel
+    @StateObject var cvm = Clipboard.shared
 
     var body: some View {
         ZStack {
@@ -18,7 +19,7 @@ struct NotchContentView: View {
                 if vm.contentType == .drop {
                     dropView
                 } else if vm.contentType == .clipboard {
-                    ClipboardView(vm: vm)
+                    ClipboardView(vm: vm, cvm: cvm)
                 } else if vm.contentType == .menu {
                     NotchMenuView(vm: vm)
                 } else if vm.contentType == .settings {

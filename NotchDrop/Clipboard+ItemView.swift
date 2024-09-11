@@ -100,7 +100,7 @@ struct ClipboardItemView: View {
             Text(item.fileName)
                 .font(.caption)
                 .lineLimit(1)
-            Text(item.copiedDate, style: .time)
+            Text(formattedDate(item.copiedDate))
                 .font(.caption2)
                 .foregroundColor(.secondary)
         }
@@ -120,6 +120,25 @@ struct ClipboardItemView: View {
             }
         case .file:
             pasteboard.writeObjects([item.storageURL as NSURL])
+        }
+    }
+
+    func formattedDate(_ date: Date) -> String {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        if calendar.isDateInToday(date) {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "HH:mm"
+            return formatter.string(from: date)
+        } else if calendar.isDateInYesterday(date) {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "HH:mm"
+            return "Yesterday, \(formatter.string(from: date))"
+        } else {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "MMM d, yyyy"
+            return formatter.string(from: date)
         }
     }
 }

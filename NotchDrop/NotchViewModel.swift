@@ -82,10 +82,15 @@ class NotchViewModel: NSObject, ObservableObject {
     let hapticSender = PassthroughSubject<Void, Never>()
     
     @Published var clipboardItems: [ClipboardItem] = []
+    
+    // New property to trigger scroll
+    @Published var shouldScrollClipboardToStart: Bool = false
 
     func notchOpen(_ reason: OpenReason) {
         openReason = reason
         status = .opened
+        // Trigger scroll when notch is opened
+        shouldScrollClipboardToStart = true
     }
 
     func notchClose() {

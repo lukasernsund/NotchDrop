@@ -3,9 +3,10 @@ import ColorfulX
 import UniformTypeIdentifiers
 
 struct ClipboardView: View {
-    @StateObject var vm: NotchViewModel
-    @StateObject var cvm = Clipboard.shared
+    @ObservedObject var vm: NotchViewModel
+    @ObservedObject var cvm: Clipboard
     @State private var searchText = ""
+    @State private var scrollProxy: ScrollViewProxy?
 
     var storageTime: String {
         switch cvm.selectedFileStorageTime {
@@ -61,6 +62,14 @@ struct ClipboardView: View {
         }
         .animation(vm.animation, value: cvm.items)
         .animation(vm.animation, value: cvm.isLoading)
+        .onChange(of: vm.shouldScrollClipboardToStart) { newValue in
+            if newValue {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    scrollToStart()
+                    vm.shouldScrollClipboardToStart = false
+                }
+            }
+        }
     }
 
     var text: String {
@@ -104,47 +113,37 @@ struct ClipboardView: View {
     }
 
     var itemList: some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: vm.spacing) {
-                ForEach(filteredItems.prefix(10)) { item in
-                    ClipboardItemView(item: item, vm: vm, cvm: cvm)
-                }
-                if filteredItems.count > 10 {
-                    Button(action: openFileLocation) {
-                        VStack {
-                            Image(systemName: "ellipsis.circle")
-                            Text("Show more")
-                        }
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal) {
+                HStack(spacing: vm.spacing) {
+                    ForEach(filteredItems) { item in
+                        ClipboardItemView(item: item, vm: vm, cvm: cvm)
+                            .id(item.id)
                     }
-                    .buttonStyle(.plain)
-                    .padding(8)
-                    .background(Color.gray.opacity(0.2))
-                    .cornerRadius(8)
                 }
+                .padding(vm.spacing)
             }
-            .padding(vm.spacing)
+            .padding(-vm.spacing)
+            .scrollIndicators(.never)
+            .onAppear {
+                scrollProxy = proxy
+            }
         }
-        .padding(-vm.spacing)
-        .scrollIndicators(.never)
     }
 
-    func openFileLocation() {
-        let fileManager = FileManager.default
-        let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let clipboardItemsURL = documentsURL.appendingPathComponent(Clipboard.ClipboardItem.mainDir)
-        
-        if fileManager.fileExists(atPath: clipboardItemsURL.path) {
-            NSWorkspace.shared.open(clipboardItemsURL)
-        } else {
-            print("Error: Clipboard items directory not found")
+    private func scrollToStart() {
+        withAnimation {
+            scrollProxy?.scrollTo(filteredItems.first?.id, anchor: .leading)
         }
     }
 }
 
-#Preview {
-    ClipboardView(vm: .init())
-        .padding()
-        .frame(width: 550, height: 200, alignment: .center)
-        .background(.black)
-        .preferredColorScheme(.dark)
+struct ClipboardView_Previews: PreviewProvider {
+    static var previews: some View {
+        ClipboardView(vm: NotchViewModel(), cvm: Clipboard.shared)
+            .padding()
+            .frame(width: 550, height: 200, alignment: .center)
+            .background(.black)
+            .preferredColorScheme(.dark)
+    }
 }
