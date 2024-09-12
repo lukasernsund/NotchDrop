@@ -1,4 +1,3 @@
-
 import ColorfulX
 import SwiftUI
 
@@ -15,9 +14,17 @@ struct NotchHeaderView: View {
             }
             Spacer()
             Button(action: {
+                vm.switchPage(to: .settings)
+            }) {
+                Image(systemName: "gearshape")
+            }
+            .buttonStyle(PlainButtonStyle())
+            .padding(.horizontal, 8)
+            Button(action: {
                 vm.contentType = .menu
             }) {
                 Image(systemName: "ellipsis")
+                    .frame(width: 30, height: 30)
             }
             .buttonStyle(PlainButtonStyle())
         }

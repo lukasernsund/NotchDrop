@@ -8,6 +8,7 @@ struct ClipboardView: View {
     @State private var searchText = ""
     @State private var scrollProxy: ScrollViewProxy?
     @State private var selectedFilters: Set<Clipboard.ClipboardItem.ItemType> = []
+    @FocusState private var isSearchFocused: Bool
 
     var storageTime: String {
         switch cvm.selectedFileStorageTime {
@@ -42,39 +43,47 @@ struct ClipboardView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 0) {
-                Text("Clipboard")
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .padding(.leading, vm.spacing)
-                    .padding(.vertical, vm.spacing / 4)
-                
-                Spacer()
-                
-                Button {
-                    cvm.removeAll()
-                } label: {
-                    Image(systemName: "trash")
-                        .font(.title2)
+        ZStack {
+            Color.clear
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    isSearchFocused = false
+                }
+            
+            VStack(spacing: 0) {
+                HStack(spacing: 0) {
+                    Text("Clipboard")
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .padding(.leading, vm.spacing)
+                        .padding(.vertical, vm.spacing / 4)
+                    
+                    Spacer()
+                    
+                    Button {
+                        cvm.removeAll()
+                    } label: {
+                        Image(systemName: "trash")
+                            .font(.title2)
+                            .padding(.trailing, vm.spacing)
+                            .padding(.vertical, vm.spacing / 4)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+                HStack(spacing: 0) {
+                    searchBar
+                        .padding(.leading, vm.spacing)
+                        .padding(.vertical, vm.spacing)
+                    
+                    Spacer() // This will push the search bar and filter options to the edges
+                    
+                    filterOptions
                         .padding(.trailing, vm.spacing)
                         .padding(.vertical, vm.spacing / 4)
                 }
-                .buttonStyle(PlainButtonStyle())
+                .background(Color.black)
+                panel
             }
-            HStack(spacing: 0) {
-                searchBar
-                    .padding(.leading, vm.spacing)
-                    .padding(.vertical, vm.spacing / 4)
-                
-                Spacer() // This will push the search bar and filter options to the edges
-                
-                filterOptions
-                    .padding(.trailing, vm.spacing)
-                    .padding(.vertical, vm.spacing / 4)
-            }
-            .background(Color.black)
-            panel
         }
     }
 
@@ -83,7 +92,7 @@ struct ClipboardView: View {
             ColorfulView(
                 color: .constant(ColorfulPreset.starry.colors),
                 speed: .constant(0.5),
-                transitionSpeed: .constant(25)
+                transitionSpeed: .constant(50)
             )
             .opacity(0.5)
             .clipShape(RoundedRectangle(cornerRadius: vm.cornerRadius))
@@ -95,14 +104,6 @@ struct ClipboardView: View {
                 }
         }
         .frame(height: 152)
-        .onChange(of: vm.shouldScrollClipboardToStart) { newValue in
-            if newValue {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    scrollToStart()
-                    vm.shouldScrollClipboardToStart = false
-                }
-            }
-        }
     }
 
     var text: String {
@@ -131,10 +132,11 @@ struct ClipboardView: View {
             Image(systemName: "magnifyingglass")
             TextField("Search", text: $searchText)
                 .textFieldStyle(PlainTextFieldStyle())
+                .focused($isSearchFocused)
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 6)
         .padding(.horizontal, 12)
-        .background(Color.white.opacity(0.1))
+        .background(Color.clear)
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)
@@ -193,12 +195,6 @@ struct ClipboardView: View {
             .onAppear {
                 scrollProxy = proxy
             }
-        }
-    }
-
-    private func scrollToStart() {
-        withAnimation {
-            scrollProxy?.scrollTo(filteredItems.first?.id, anchor: .leading)
         }
     }
 

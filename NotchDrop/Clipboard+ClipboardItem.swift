@@ -52,7 +52,7 @@ extension Clipboard {
         }
 
         static func compressAndResizeImage(_ image: NSImage) -> Data {
-            let maxSize: CGFloat = 128 // Max width or height
+            let maxSize: CGFloat = 64 // Max width or height
             let aspectRatio = image.size.width / image.size.height
             let newSize: NSSize
 

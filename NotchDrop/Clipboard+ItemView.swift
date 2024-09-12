@@ -9,6 +9,7 @@ struct ClipboardItemView: View {
     @ObservedObject var cvm: Clipboard
 
     @State private var isHovered = false
+    @State private var formattedTimeAgo: String = ""
 
     private let itemSize: CGFloat = 120
     private let cornerRadius: CGFloat = 8
@@ -41,7 +42,7 @@ struct ClipboardItemView: View {
                 }
                 .stroke(
                     LinearGradient(
-                        gradient: Gradient(colors: [color, color.opacity(0)]),
+                        gradient: Gradient(colors: [color.opacity(0), color.opacity(0)]),
                         startPoint: .topLeading,
                         endPoint: UnitPoint(x: 0.3, y: 0.3)
                     ),
@@ -94,6 +95,12 @@ struct ClipboardItemView: View {
                 .offset(x: vm.spacing / 2, y: -vm.spacing / 2)
                 .onTapGesture { cvm.delete(item.id) }
         }
+        .onAppear {
+            updateFormattedTimeAgo()
+        }
+        .onReceive(Timer.publish(every: 60, on: .main, in: .common).autoconnect()) { _ in
+            updateFormattedTimeAgo()
+        }
     }
 
     var itemPreview: some View {
@@ -129,7 +136,7 @@ struct ClipboardItemView: View {
             Text(item.fileName)
                 .font(.caption)
                 .lineLimit(1)
-            Text(formattedDate(item.copiedDate))
+            Text(formattedTimeAgo)
                 .font(.caption2)
                 .foregroundColor(.secondary)
         }
@@ -152,27 +159,38 @@ struct ClipboardItemView: View {
         }
     }
 
+    func updateFormattedTimeAgo() {
+        formattedTimeAgo = formattedDate(item.copiedDate)
+    }
+
     func formattedDate(_ date: Date) -> String {
-        let calendar = Calendar.current
         let now = Date()
-        let components = calendar.dateComponents([.minute, .hour, .day], from: date, to: now)
+        let components = Calendar.current.dateComponents([.second, .minute, .hour, .day, .weekOfYear, .month, .year], from: date, to: now)
         
-        if let minutes = components.minute, minutes < 1 {
-            return "Just now"
-        } else if let minutes = components.minute, minutes < 60 {
-            return "\(minutes) minute\(minutes == 1 ? "" : "s") ago"
-        } else if calendar.isDateInToday(date) {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "HH:mm"
-            return formatter.string(from: date)
-        } else if calendar.isDateInYesterday(date) {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "HH:mm"
-            return "Yesterday, \(formatter.string(from: date))"
+        if let year = components.year, year > 0 {
+            return year == 1 ? "1 year ago" : "\(year) years ago"
+        } else if let month = components.month, month > 0 {
+            return month == 1 ? "1 month ago" : "\(month) months ago"
+        } else if let week = components.weekOfYear, week > 0 {
+            return week == 1 ? "1 week ago" : "\(week) weeks ago"
+        } else if let day = components.day, day > 0 {
+            if day == 1 {
+                return "Yesterday"
+            } else if day < 7 {
+                return "\(day) days ago"
+            } else {
+                let formatter = DateFormatter()
+                formatter.dateFormat = "MMM d, yyyy"
+                return formatter.string(from: date)
+            }
+        } else if let hour = components.hour, hour > 0 {
+            return hour == 1 ? "1 hour ago" : "\(hour) hours ago"
+        } else if let minute = components.minute, minute > 0 {
+            return minute == 1 ? "1 minute ago" : "\(minute) minutes ago"
+        } else if let second = components.second, second > 0 {
+            return second == 1 ? "1 second ago" : "\(second) seconds ago"
         } else {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMM d, yyyy"
-            return formatter.string(from: date)
+            return "Just now"
         }
     }
 

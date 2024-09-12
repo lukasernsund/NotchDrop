@@ -90,6 +90,7 @@ class NotchViewModel: NSObject, ObservableObject {
     @Published var shouldScrollClipboardToStart: Bool = false
 
     func notchOpen(_ reason: OpenReason) {
+        contentType = .drop // Always set to Drop page when opening
         openReason = reason
         status = .opened
         shouldScrollClipboardToStart = true
@@ -124,7 +125,7 @@ class NotchViewModel: NSObject, ObservableObject {
     private func updateNotchSize() {
         switch contentType {
         case .clipboard:
-            notchOpenedSize = .init(width: 600, height: 300)
+            notchOpenedSize = .init(width: 600, height: 320)
         default:
             notchOpenedSize = .init(width: 600, height: 160)
         }
