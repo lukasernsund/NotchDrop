@@ -71,7 +71,8 @@ class Clipboard: ObservableObject {
         do {
             let items = try urls.map { try ClipboardItem(url: $0) }
             DispatchQueue.main.async {
-                items.forEach { self.items.updateOrInsert($0, at: 0) }
+                items.forEach { self.items.updateOrInsert($0, at: 0)}
+                self.sortItems()
                 self.isLoading -= 1
             }
         } catch {
@@ -89,6 +90,7 @@ class Clipboard: ObservableObject {
             inEdit.remove(item)
         }
         items = inEdit
+        sortItems()
     }
 
     func delete(_ item: ClipboardItem.ID) {
@@ -115,10 +117,32 @@ class Clipboard: ObservableObject {
 
         inEdit.remove(item)
         items = inEdit
+        sortItems()
     }
 
     func removeAll() {
         items.forEach { delete(item: $0) }
+    }
+
+    func togglePin(_ id: ClipboardItem.ID) {
+        guard let index = items.firstIndex(where: { $0.id == id }) else { return }
+        var updatedItem = items[index]
+        updatedItem.isPinned.toggle()
+        items.remove(at: index)
+        items.insert(updatedItem, at: index)
+        sortItems()
+    }
+
+    private func sortItems() {
+        items = OrderedSet(items.sorted { item1, item2 in
+            if item1.isPinned && !item2.isPinned {
+                return true
+            } else if !item1.isPinned && item2.isPinned {
+                return false
+            } else {
+                return item1.copiedDate > item2.copiedDate
+            }
+        })
     }
 }
 
@@ -210,6 +234,7 @@ extension Clipboard {
             let item = try ClipboardItem(url: tempURL)
             DispatchQueue.main.async {
                 self.items.updateOrInsert(item, at: 0)
+                self.sortItems()
                 self.isLoading -= 1
             }
             try FileManager.default.removeItem(at: tempURL)
@@ -233,6 +258,7 @@ extension Clipboard {
             let item = try ClipboardItem(url: tempURL)
             DispatchQueue.main.async {
                 self.items.updateOrInsert(item, at: 0)
+                self.sortItems()
                 self.isLoading -= 1
             }
             try FileManager.default.removeItem(at: tempURL)

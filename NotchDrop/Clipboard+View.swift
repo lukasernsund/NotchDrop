@@ -9,6 +9,7 @@ struct ClipboardView: View {
     @State private var scrollProxy: ScrollViewProxy?
     @State private var selectedFilters: Set<Clipboard.ClipboardItem.ItemType> = []
     @FocusState private var isSearchFocused: Bool
+    @State private var isTrashHovered = false
 
     var storageTime: String {
         switch cvm.selectedFileStorageTime {
@@ -31,7 +32,7 @@ struct ClipboardView: View {
     }
 
     var filteredItems: [Clipboard.ClipboardItem] {
-        cvm.items.filter { item in
+        let filtered = cvm.items.filter { item in
             let matchesSearch = searchText.isEmpty ||
                 item.fileName.localizedCaseInsensitiveContains(searchText) ||
                 item.previewText.localizedCaseInsensitiveContains(searchText)
@@ -39,6 +40,16 @@ struct ClipboardView: View {
             let matchesFilter = selectedFilters.isEmpty || selectedFilters.contains(item.itemType)
             
             return matchesSearch && matchesFilter
+        }
+        
+        return filtered.sorted { item1, item2 in
+            if item1.isPinned && !item2.isPinned {
+                return true
+            } else if !item1.isPinned && item2.isPinned {
+                return false
+            } else {
+                return item1.copiedDate > item2.copiedDate
+            }
         }
     }
 
@@ -67,8 +78,13 @@ struct ClipboardView: View {
                             .font(.title2)
                             .padding(.trailing, vm.spacing)
                             .padding(.vertical, vm.spacing / 4)
+                            .scaleEffect(isTrashHovered ? 1.2 : 1.0)
                     }
                     .buttonStyle(PlainButtonStyle())
+                    .onHover { hovering in
+                        isTrashHovered = hovering
+                    }
+                    .animation(vm.animation, value: isTrashHovered)
                 }
                 HStack(spacing: 0) {
                     searchBar
@@ -184,9 +200,11 @@ struct ClipboardView: View {
                     ForEach(filteredItems) { item in
                         ClipboardItemView(item: item, vm: vm, cvm: cvm)
                             .id(item.id)
+                            .transition(.scale.combined(with: .opacity))
                     }
                 }
                 .padding(vm.spacing)
+                .animation(.spring(), value: filteredItems)
             }
             .background(Color.white.opacity(0.1))
             .cornerRadius(vm.cornerRadius)

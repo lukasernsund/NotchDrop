@@ -11,6 +11,7 @@ extension Clipboard {
         let workspacePreviewImageData: Data
         let itemType: ItemType
         let previewText: String
+        var isPinned: Bool
 
         enum ItemType: String, Codable, CaseIterable {
             case file
@@ -25,6 +26,7 @@ extension Clipboard {
             fileName = url.lastPathComponent
             size = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
             copiedDate = Date()
+            isPinned = false
 
             if url.pathExtension.lowercased() == "txt" {
                 itemType = .text

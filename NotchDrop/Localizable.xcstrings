@@ -356,7 +356,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Drop files to store them for"
+            "value" : "Drop files here to store them for"
           }
         },
         "zh-Hans" : {
@@ -778,6 +778,9 @@
         }
       }
     },
+    "Pin" : {
+
+    },
     "Press Option to delete" : {
 
     },
@@ -943,6 +946,9 @@
           }
         }
       }
+    },
+    "Unpin" : {
+
     },
     "Version: %@ (Build: %@)" : {
       "extractionState" : "stale",
