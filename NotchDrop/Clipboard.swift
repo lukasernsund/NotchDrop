@@ -69,7 +69,9 @@ class Clipboard: ObservableObject {
             return
         }
         do {
-            let items = try urls.map { try ClipboardItem(url: $0) }
+            let sourceApp = detectSourceApp()
+            let deviceType = detectDeviceType()
+            let items = try urls.map { try ClipboardItem(url: $0, sourceApp: sourceApp, deviceType: deviceType) }
             DispatchQueue.main.async {
                 items.forEach { self.items.updateOrInsert($0, at: 0)}
                 self.sortItems()
@@ -133,6 +135,24 @@ class Clipboard: ObservableObject {
         sortItems()
     }
 
+    func addLabel(_ id: ClipboardItem.ID, label: String) {
+        guard let index = items.firstIndex(where: { $0.id == id }) else { return }
+        var updatedItem = items[index]
+        updatedItem.addLabel(label)
+        items.remove(at: index)
+        items.insert(updatedItem, at: index)
+        sortItems()
+    }
+
+    func removeLabel(_ id: ClipboardItem.ID, label: String) {
+        guard let index = items.firstIndex(where: { $0.id == id }) else { return }
+        var updatedItem = items[index]
+        updatedItem.removeLabel(label)
+        items.remove(at: index)
+        items.insert(updatedItem, at: index)
+        sortItems()
+    }
+
     private func sortItems() {
         items = OrderedSet(items.sorted { item1, item2 in
             if item1.isPinned && !item2.isPinned {
@@ -143,6 +163,19 @@ class Clipboard: ObservableObject {
                 return item1.copiedDate > item2.copiedDate
             }
         })
+    }
+
+    private func detectSourceApp() -> String? {
+        // This is a placeholder. In a real implementation, you'd need to use
+        // macOS-specific APIs to detect the source app.
+        return NSWorkspace.shared.frontmostApplication?.localizedName
+    }
+
+    private func detectDeviceType() -> ClipboardItem.DeviceType {
+        // This is a placeholder. In a real implementation, you'd need to implement
+        // a way to detect if the content is coming from an iPhone or iPad.
+        // For now, we'll always return .mac
+        return .mac
     }
 }
 
@@ -231,7 +264,10 @@ extension Clipboard {
         do {
             let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension("txt")
             try string.write(to: tempURL, atomically: true, encoding: .utf8)
-            let item = try ClipboardItem(url: tempURL)
+            let sourceApp = detectSourceApp()
+            let deviceType = detectDeviceType()
+            let itemType = determineItemType(from: string)
+            let item = try ClipboardItem(url: tempURL, itemType: itemType, sourceApp: sourceApp, deviceType: deviceType)
             DispatchQueue.main.async {
                 self.items.updateOrInsert(item, at: 0)
                 self.sortItems()
@@ -255,7 +291,9 @@ extension Clipboard {
                let pngData = bitmapImage.representation(using: .png, properties: [:]) {
                 try pngData.write(to: tempURL)
             }
-            let item = try ClipboardItem(url: tempURL)
+            let sourceApp = detectSourceApp()
+            let deviceType = detectDeviceType()
+            let item = try ClipboardItem(url: tempURL, sourceApp: sourceApp, deviceType: deviceType)
             DispatchQueue.main.async {
                 self.items.updateOrInsert(item, at: 0)
                 self.sortItems()
@@ -268,5 +306,21 @@ extension Clipboard {
                 NSAlert.popError(error)
             }
         }
+    }
+
+    private func determineItemType(from content: String) -> ClipboardItem.ItemType {
+        if content.lowercased().hasPrefix("http://") || content.lowercased().hasPrefix("https://") {
+            return .link
+        } else if content.matches(regex: "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$") {
+            return .color
+        } else {
+            return .text
+        }
+    }
+}
+
+extension String {
+    func matches(regex: String) -> Bool {
+        return self.range(of: regex, options: .regularExpression) != nil
     }
 }

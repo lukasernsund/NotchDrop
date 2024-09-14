@@ -12,14 +12,26 @@ extension Clipboard {
         let itemType: ItemType
         let previewText: String
         var isPinned: Bool
+        var labels: Set<String>
+        let sourceApp: String?
+        let deviceType: DeviceType?
 
         enum ItemType: String, Codable, CaseIterable {
             case file
             case text
             case image
+            case link
+            case color
         }
 
-        init(url: URL) throws {
+        enum DeviceType: String, Codable {
+            case mac
+            case iPhone
+            case iPad
+            case other
+        }
+
+        init(url: URL, itemType: ItemType? = nil, sourceApp: String? = nil, deviceType: DeviceType? = .mac) throws {
             assert(!Thread.isMainThread)
 
             id = UUID()
@@ -27,13 +39,22 @@ extension Clipboard {
             size = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
             copiedDate = Date()
             isPinned = false
+            labels = []
+            self.sourceApp = sourceApp
+            self.deviceType = deviceType
 
-            if url.pathExtension.lowercased() == "txt" {
-                itemType = .text
+            if let forcedItemType = itemType {
+                self.itemType = forcedItemType
+                let content = try String(contentsOf: url, encoding: .utf8)
+                previewText = content.prefix(50).trimmingCharacters(in: .whitespacesAndNewlines)
                 workspacePreviewImageData = NSWorkspace.shared.icon(forFileType: "txt").pngRepresentation
-                previewText = try String(contentsOf: url, encoding: .utf8).prefix(50).trimmingCharacters(in: .whitespacesAndNewlines)
+            } else if url.pathExtension.lowercased() == "txt" {
+                let content = try String(contentsOf: url, encoding: .utf8)
+                self.itemType = Self.determineItemType(from: content)
+                previewText = content.prefix(50).trimmingCharacters(in: .whitespacesAndNewlines)
+                workspacePreviewImageData = NSWorkspace.shared.icon(forFileType: "txt").pngRepresentation
             } else if ["png", "jpg", "jpeg", "gif"].contains(url.pathExtension.lowercased()) {
-                itemType = .image
+                self.itemType = .image
                 if let image = NSImage(contentsOf: url) {
                     workspacePreviewImageData = Self.compressAndResizeImage(image)
                 } else {
@@ -41,7 +62,7 @@ extension Clipboard {
                 }
                 previewText = ""
             } else {
-                itemType = .file
+                self.itemType = .file
                 workspacePreviewImageData = Self.compressAndResizeImage(url.snapshotPreview())
                 previewText = ""
             }
@@ -51,6 +72,38 @@ extension Clipboard {
                 withIntermediateDirectories: true
             )
             try FileManager.default.copyItem(at: url, to: storageURL)
+
+            // Initialize labels based on item type
+            switch self.itemType {
+            case .link:
+                labels.insert("Link")
+            case .color:
+                labels.insert("Color")
+            case .image:
+                labels.insert("Image")
+            case .file:
+                labels.insert("File")
+            case .text:
+                labels.insert("Text")
+            }
+
+            // Add source app as a label if available
+            if let sourceApp = sourceApp {
+                labels.insert(sourceApp)
+            }
+
+            // Add device type as a label
+            labels.insert(deviceType?.rawValue ?? "Unknown Device")
+        }
+
+        static func determineItemType(from content: String) -> ItemType {
+            if content.lowercased().hasPrefix("http://") || content.lowercased().hasPrefix("https://") {
+                return .link
+            } else if content.matches(regex: "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$") {
+                return .color
+            } else {
+                return .text
+            }
         }
 
         static func compressAndResizeImage(_ image: NSImage) -> Data {
@@ -80,6 +133,26 @@ extension Clipboard {
             }
 
             return bitmapImage.representation(using: .png, properties: [:]) ?? Data()
+        }
+
+        mutating func addLabel(_ label: String) {
+            labels.insert(label)
+        }
+
+        mutating func removeLabel(_ label: String) {
+            labels.remove(label)
+        }
+
+        func hasLabel(_ label: String) -> Bool {
+            return labels.contains(label)
+        }
+
+        func getAllLabels() -> [String] {
+            return Array(labels)
+        }
+
+        mutating func clearAllLabels() {
+            labels.removeAll()
         }
     }
 }

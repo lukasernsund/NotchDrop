@@ -12,6 +12,8 @@ struct ClipboardItemView: View {
     @State private var isPinButtonHovered = false
     @State private var formattedTimeAgo: String = ""
     @State private var isCopied = false
+    @State private var isEditingLabels = false
+    @State private var newLabel = ""
 
     private let itemSize: CGFloat = 120
     private let cornerRadius: CGFloat = 8
@@ -24,15 +26,30 @@ struct ClipboardItemView: View {
 
     var body: some View {
         ZStack {
+            var backgroundColor: Color {
+                if item.itemType == .color, let color = Color(hex: item.previewText) {
+                    return color
+                } else {
+                    return Color.gray.opacity(0.2)
+                }
+            }
+            var foregroundColor: Color {
+                if item.itemType == .color, let color = Color(hex: item.previewText) {
+                    return color
+                } else {
+                    return Color.gray.opacity(0.2)
+                }
+            }
+            
             VStack(spacing: 0) {
                 Spacer()
                 itemPreview
                 Spacer()
-                itemInfo
+                itemInfo.foregroundColor(textColorForBackground(foregroundColor ?? .white))
             }
             .padding(8)
             .frame(width: itemSize, height: itemSize)
-            .background(Color.gray.opacity(0.2))
+            .background(backgroundColor)
             .cornerRadius(cornerRadius)
             .overlay(
                 GeometryReader { geometry in
@@ -51,7 +68,7 @@ struct ClipboardItemView: View {
                     }
                     .stroke(
                         LinearGradient(
-                            gradient: Gradient(colors: [color.opacity(0), color.opacity(0)]),
+                            gradient: Gradient(colors: [isAnyPartHovered ? color.opacity(0) : color.opacity(0.5), color.opacity(0)]),
                             startPoint: .topLeading,
                             endPoint: UnitPoint(x: 0.3, y: 0.3)
                         ),
@@ -102,11 +119,24 @@ struct ClipboardItemView: View {
             Button("Copy") {
                 copyToClipboard()
             }
+            if item.itemType == .link {
+                Button("Copy URL") {
+                    copyToClipboard(contentOnly: true)
+                }
+            }
+            if item.itemType == .color {
+                Button("Copy Color Code") {
+                    copyToClipboard(contentOnly: true)
+                }
+            }
             Button("Delete") {
                 cvm.delete(item.id)
             }
             Button(item.isPinned ? "Unpin" : "Pin") {
                 cvm.togglePin(item.id)
+            }
+            Button("Edit Labels") {
+                isEditingLabels = true
             }
             if item.itemType == .file || item.itemType == .image {
                 ShareLink(item: item.storageURL) {
@@ -114,13 +144,20 @@ struct ClipboardItemView: View {
                 }
             }
         }
+        .sheet(isPresented: $isEditingLabels) {
+            labelEditView
+        }
         .contentShape(Rectangle())
         .onDrag { NSItemProvider(contentsOf: item.storageURL) ?? .init() }
         .onTapGesture {
             guard !vm.optionKeyPressed else { return }
             vm.notchClose()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                NSWorkspace.shared.open(item.storageURL)
+                if item.itemType == .link, let url = URL(string: item.previewText) {
+                    NSWorkspace.shared.open(url)
+                } else {
+                    NSWorkspace.shared.open(item.storageURL)
+                }
             }
         }
         .onAppear {
@@ -155,13 +192,35 @@ struct ClipboardItemView: View {
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 50, height: 50)
                 }
+            case .link:
+                VStack {
+                    Image(systemName: "link")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 30, height: 30)
+                        .foregroundColor(.blue)
+                }
+            case .color:
+                EmptyView()
             }
         }
     }
 
     var itemInfo: some View {
         VStack(alignment: .leading, spacing: 2) {
-            if item.itemType != .text {
+            switch item.itemType {
+            case .color:
+                Text(item.previewText)
+                    .font(.caption)
+                    .lineLimit(1)
+                    .foregroundColor(textColorForBackground(Color(hex: item.previewText) ?? .white))
+            case .link:
+                Text(item.previewText)
+                    .font(.caption)
+                    .lineLimit(2)
+            case .text:
+                EmptyView()
+            default:
                 Text(item.fileName)
                     .font(.caption)
                     .lineLimit(1)
@@ -169,8 +228,61 @@ struct ClipboardItemView: View {
             Text(formattedTimeAgo)
                 .font(.caption2)
                 .foregroundColor(.secondary)
+            // labelsView
         }
         .frame(width: itemSize - 16, alignment: .leading)
+    }
+
+    var labelsView: some View {
+        FlowLayout(alignment: .leading, spacing: 4) {
+            ForEach(Array(item.labels), id: \.self) { label in
+                Text(label)
+                    .font(.system(size: 8))
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 2)
+                    .background(labelColor(for: label))
+                    .cornerRadius(4)
+            }
+        }
+        .frame(width: itemSize - 16)
+    }
+
+    var labelEditView: some View {
+        VStack {
+            Text("Edit Labels")
+                .font(.headline)
+            
+            List {
+                ForEach(Array(userEditableLabels), id: \.self) { label in
+                    HStack {
+                        Text(label)
+                        Spacer()
+                        Button(action: {
+                            cvm.removeLabel(item.id, label: label)
+                        }) {
+                            Image(systemName: "minus.circle.fill")
+                                .foregroundColor(.red)
+                        }
+                    }
+                }
+            }
+            
+            HStack {
+                TextField("New Label", text: $newLabel)
+                Button("Add") {
+                    if !newLabel.isEmpty {
+                        cvm.addLabel(item.id, label: newLabel)
+                        newLabel = ""
+                    }
+                }
+            }
+            .padding()
+            
+            Button("Done") {
+                isEditingLabels = false
+            }
+        }
+        .frame(width: 320, height: 400)
     }
 
     var copyButton: some View {
@@ -214,15 +326,29 @@ struct ClipboardItemView: View {
         }) {
             ZStack {
                 Circle()
-                    .fill(.white.opacity(0.0))
+                    .fill(deleteButtonBackgroundColor)
                     .frame(width: buttonSize, height: buttonSize)
                 Image(systemName: "trash")
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(isDeleteButtonHovered ? .white : .white.opacity(0.7))
+                    .foregroundColor(deleteButtonForegroundColor)
             }
         }
         .buttonStyle(PlainButtonStyle())
         .frame(width: buttonSize, height: buttonSize)
+    }
+
+    var deleteButtonBackgroundColor: Color {
+        return .white.opacity(0.0)
+    }
+
+    var deleteButtonForegroundColor: Color {
+        if item.itemType == .color, let color = Color(hex: item.previewText) {
+            return textColorForBackground(color ?? .white)
+        } else if isDeleteButtonHovered {
+            return .white
+        } else {
+            return .white.opacity(0.7)
+        }
     }
 
     var pinButton: some View {
@@ -231,22 +357,36 @@ struct ClipboardItemView: View {
         }) {
             ZStack {
                 Circle()
-                    .fill(.white.opacity(0.0))
+                    .fill(pinButtonBackgroundColor)
                     .frame(width: buttonSize, height: buttonSize)
                 Image(systemName: item.isPinned && isPinButtonHovered ? "pin.slash.fill" : item.isPinned ? "pin.fill" : "pin")
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(isPinButtonHovered || item.isPinned ? .white : .white.opacity(0.7))
+                    .foregroundColor(pinButtonForegroundColor)
             }
         }
         .buttonStyle(PlainButtonStyle())
         .frame(width: buttonSize, height: buttonSize)
     }
 
-    func copyToClipboard() {
+    var pinButtonBackgroundColor: Color {
+        return .white.opacity(0.0)
+    }
+
+    var pinButtonForegroundColor: Color {
+        if item.itemType == .color, let color = Color(hex: item.previewText) {
+            return textColorForBackground(color ?? .white)
+        } else if isPinButtonHovered || item.isPinned {
+            return .white
+        } else {
+            return .white.opacity(0.7)
+        }
+    }
+
+    func copyToClipboard(contentOnly: Bool = false) {
         let items: [String: Any]
         
         switch item.itemType {
-        case .text:
+        case .text, .link, .color:
             items = [NSPasteboard.PasteboardType.string.rawValue: item.previewText]
         case .image:
             if let image = NSImage(contentsOf: item.storageURL) {
@@ -255,7 +395,15 @@ struct ClipboardItemView: View {
                 items = [:]
             }
         case .file:
-             items = [NSPasteboard.PasteboardType.fileURL.rawValue: item.storageURL]
+            if contentOnly {
+                if let fileContent = try? String(contentsOf: item.storageURL, encoding: .utf8) {
+                    items = [NSPasteboard.PasteboardType.string.rawValue: fileContent]
+                } else {
+                    items = [:]
+                }
+            } else {
+                items = [NSPasteboard.PasteboardType.fileURL.rawValue: item.storageURL]
+            }
         }
         
         let pasteboardItem = NSPasteboardItem()
@@ -322,6 +470,103 @@ struct ClipboardItemView: View {
             return .green
         case .image:
             return .orange
+        case .link:
+            return .purple
+        case .color:
+            return .pink
         }
+    }
+
+    func labelColor(for label: String) -> Color {
+        if isSystemLabel(label) {
+            return .gray.opacity(0.3)
+        } else {
+            return .blue.opacity(0.3)
+        }
+    }
+
+    func isSystemLabel(_ label: String) -> Bool {
+        let systemLabels = [item.itemType.rawValue, item.sourceApp, item.deviceType?.rawValue].compactMap { $0 }
+        return systemLabels.contains(label)
+    }
+
+    var userEditableLabels: [String] {
+        return item.labels.filter { !isSystemLabel($0) }
+    }
+
+    func textColorForBackground(_ backgroundColor: Color) -> Color {
+        let components = backgroundColor.cgColor?.components ?? [0, 0, 0, 0]
+        let brightness = (components[0] * 299 + components[1] * 587 + components[2] * 114) / 1000
+        return brightness > 0.5 ? .black : .white
+    }
+}
+
+struct FlowLayout: Layout {
+    var alignment: HorizontalAlignment = .leading
+    var spacing: CGFloat = 4
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
+        return arrangeSubviews(sizes: sizes, in: proposal.width ?? 0)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
+        var origin = bounds.origin
+        var maxY: CGFloat = 0
+
+        for (index, subview) in subviews.enumerated() {
+            if origin.x + sizes[index].width > bounds.maxX {
+                origin.x = bounds.origin.x
+                origin.y = maxY + spacing
+            }
+
+            subview.place(at: origin, proposal: ProposedViewSize(sizes[index]))
+            origin.x += sizes[index].width + spacing
+            maxY = max(maxY, origin.y + sizes[index].height)
+        }
+    }
+
+    private func arrangeSubviews(sizes: [CGSize], in width: CGFloat) -> CGSize {
+        var origin = CGPoint.zero
+        var maxY: CGFloat = 0
+
+        for size in sizes {
+            if origin.x + size.width > width {
+                origin.x = 0
+                origin.y = maxY + spacing
+            }
+
+            origin.x += size.width + spacing
+            maxY = max(maxY, origin.y + size.height)
+        }
+
+        return CGSize(width: width, height: maxY)
+    }
+}
+
+extension Color {
+    init?(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            return nil
+        }
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue:  Double(b) / 255,
+            opacity: Double(a) / 255
+        )
     }
 }

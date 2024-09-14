@@ -31,11 +31,16 @@ struct ClipboardView: View {
         }
     }
 
+    var presentItemTypes: Set<Clipboard.ClipboardItem.ItemType> {
+        Set(cvm.items.map { $0.itemType })
+    }
+
     var filteredItems: [Clipboard.ClipboardItem] {
         let filtered = cvm.items.filter { item in
             let matchesSearch = searchText.isEmpty ||
                 item.fileName.localizedCaseInsensitiveContains(searchText) ||
-                item.previewText.localizedCaseInsensitiveContains(searchText)
+                item.previewText.localizedCaseInsensitiveContains(searchText) ||
+                item.labels.contains { $0.localizedCaseInsensitiveContains(searchText) }
             
             let matchesFilter = selectedFilters.isEmpty || selectedFilters.contains(item.itemType)
             
@@ -91,7 +96,7 @@ struct ClipboardView: View {
                         .padding(.leading, vm.spacing)
                         .padding(.vertical, vm.spacing)
                     
-                    Spacer() // This will push the search bar and filter options to the edges
+                    Spacer()
                     
                     filterOptions
                         .padding(.trailing, vm.spacing)
@@ -158,29 +163,31 @@ struct ClipboardView: View {
             RoundedRectangle(cornerRadius: 8)
                 .stroke(Color.white.opacity(0.2), lineWidth: 1)
         )
-        .frame(width: 300)
+        .frame(width: 320)
     }
 
     var filterOptions: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 ForEach(Clipboard.ClipboardItem.ItemType.allCases, id: \.self) { type in
-                    FilterChip(
-                        title: type.rawValue.capitalized,
-                        isSelected: selectedFilters.contains(type),
-                        color: colorForType(type),
-                        action: {
-                            if selectedFilters.contains(type) {
-                                selectedFilters.remove(type)
-                            } else {
-                                selectedFilters.insert(type)
+                    if presentItemTypes.contains(type) {
+                        FilterChip(
+                            title: type.rawValue.capitalized,
+                            isSelected: selectedFilters.contains(type),
+                            color: colorForType(type),
+                            action: {
+                                if selectedFilters.contains(type) {
+                                    selectedFilters.remove(type)
+                                } else {
+                                    selectedFilters.insert(type)
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
-            .frame(width: 200)
         }
+        .frame(width: 200)
     }
 
     var emptyView: some View {
@@ -196,7 +203,7 @@ struct ClipboardView: View {
     var itemList: some View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal) {
-                HStack(spacing: vm.spacing) {
+                LazyHStack(spacing: vm.spacing) {
                     ForEach(filteredItems) { item in
                         ClipboardItemView(item: item, vm: vm, cvm: cvm)
                             .id(item.id)
@@ -208,7 +215,7 @@ struct ClipboardView: View {
             }
             .background(Color.white.opacity(0.1))
             .cornerRadius(vm.cornerRadius)
-            .frame(height: 180)
+            .frame(height: 152)
             .scrollIndicators(.never)
             .onAppear {
                 scrollProxy = proxy
@@ -224,6 +231,10 @@ struct ClipboardView: View {
             return .green
         case .image:
             return .orange
+        case .link:
+            return .purple
+        case .color:
+            return .pink
         }
     }
 }

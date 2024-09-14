@@ -205,6 +205,9 @@
         }
       }
     },
+    "Add" : {
+
+    },
     "AirDrop" : {
       "localizations" : {
         "en" : {
@@ -302,6 +305,12 @@
     "Copy" : {
 
     },
+    "Copy Color Code" : {
+
+    },
+    "Copy URL" : {
+
+    },
     "Custom" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -350,6 +359,9 @@
     "Delete" : {
 
     },
+    "Done" : {
+
+    },
     "Drag files here to keep them for" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -372,6 +384,9 @@
           }
         }
       }
+    },
+    "Edit Labels" : {
+
     },
     "English" : {
       "extractionState" : "manual",
@@ -710,6 +725,9 @@
           }
         }
       }
+    },
+    "New Label" : {
+
     },
     "Notch Drop" : {
       "extractionState" : "stale",
