@@ -135,21 +135,7 @@ struct ClipboardView: View {
 
     var detailedView: some View {
         GeometryReader { geometry in
-            ZStack {
-                // ColorfulView(
-                //     color: .constant(ColorfulPreset.starry.colors),
-                //     speed: .constant(0.5),
-                //     transitionSpeed: .constant(50)
-                // )
-                // .opacity(0.5)
-                // .clipShape(RoundedRectangle(cornerRadius: vm.cornerRadius))
-                detailedContent
-                // RoundedRectangle(cornerRadius: vm.cornerRadius)
-                //     .foregroundStyle(.white.opacity(0.1))
-                //     .overlay {
-                        
-                //     }
-            }
+            detailedContent
             .frame(minHeight: geometry.size.height)
             .animation(.spring(), value: vm.selectedClipboardItemID)
         }
@@ -269,55 +255,127 @@ struct ClipboardView: View {
     }
 
     func expandedInfoView(for item: Clipboard.ClipboardItem) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("More Info")
-                    .font(.headline)
-                Spacer()
-                Button(action: {
-                    vm.selectClipboardItem(nil)
-                }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.gray)
-                }
-                .buttonStyle(PlainButtonStyle())
-            }
-            
-            Text("Type: \(item.itemType.rawValue.capitalized)")
-            Text("Copied from: \(item.sourceApp)")
-            Text("Date: \(item.copiedDate, formatter: itemDateFormatter)")
-            
-            if !item.labels.isEmpty {
-                Text("Tags:")
-                FlowLayout(alignment: .leading, spacing: 4) {
-                    ForEach(Array(item.labels), id: \.self) { label in
-                        Text(label)
-                            .font(.caption)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.blue.opacity(0.2))
-                            .cornerRadius(8)
+        HStack(spacing: 20) {
+            // Left side: Big preview
+            previewContent(for: item)
+                .frame(width: 300)
+                .background(Color.black.opacity(0.2))
+                .cornerRadius(10)
+
+            // Right side: Metadata
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text(item.itemType.rawValue.capitalized)
+                        .font(.headline)
+                        .foregroundColor(colorForType(item.itemType))
+                    Spacer()
+                    if item.itemType == .text {
+                        Button(action: {
+                            // Implement edit action here
+                        }) {
+                            Image(systemName: "arrow_up")
+                                .foregroundColor(.blue)
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     }
                 }
-            }
-            
-            if item.itemType == .image {
-                if let image = NSImage(contentsOf: item.storageURL) {
-                    Image(nsImage: image)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(height: 100)
+
+                metadataRow(icon: "clock", title: "Copied", value: itemDateFormatter.string(from: item.copiedDate))
+                metadataRow(icon: "app.badge", title: "Source", value: item.sourceApp ?? "Unknown")
+
+                if item.itemType == .file {
+                    metadataRow(icon: "folder", title: "Path", value: item.storageURL.path)
                 }
-            } else if item.itemType == .file {
-                Text("File path: \(item.storageURL.path)")
+                
+                if !item.labels.isEmpty {
+                    Text("Tags:")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    FlowLayout(alignment: .leading, spacing: 4) {
+                        ForEach(Array(item.labels), id: \.self) { label in
+                            Text(label)
+                                .font(.caption)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.blue.opacity(0.2))
+                                .cornerRadius(8)
+                        }
+                    }
+                }
+                
+                Spacer()
+                
+                HStack {
+                    Button("Copy") {
+                        // Implement copy action
+                    }
+                    .buttonStyle(.bordered)
+                    
+                    Spacer()
+                    
+                    Button("Delete") {
+                        cvm.delete(item.id)
+                        vm.selectClipboardItem(nil)
+                    }
+                    .buttonStyle(.bordered)
+                    .foregroundColor(.red)
+                }
             }
+            .frame(maxWidth: .infinity)
         }
         .padding()
         .background(Color.white.opacity(0.05))
         .cornerRadius(vm.cornerRadius)
-        .padding(.horizontal, vm.spacing)
-        .padding(.bottom, vm.spacing)
     }
+
+    @ViewBuilder
+    func previewContent(for item: Clipboard.ClipboardItem) -> some View {
+        switch item.itemType {
+        case .text:
+        ScrollView {
+            Text(item.previewText)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                }
+        case .image:
+            if let image = NSImage(contentsOf: item.storageURL) {
+                Image(nsImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+            }
+        case .file:
+            if let contentType = UTType(filenameExtension: URL(fileURLWithPath: item.fileName).pathExtension) {
+                VStack {
+                    Image(nsImage: NSWorkspace.shared.icon(for: contentType))
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 100, height: 100)
+                    Text(item.fileName)
+                        .font(.caption)
+                }
+            }
+        case .link:
+            VStack {
+                Image(systemName: "link")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 50, height: 50)
+                    .foregroundColor(.blue)
+                Text(item.previewText)
+                    .font(.caption)
+                    .lineLimit(3)
+            }
+        case .color:
+            if let color = Color(hex: item.previewText) {
+                color
+                    .overlay(
+                        Text(item.previewText)
+                            .foregroundColor(color.isDark ? .white : .black)
+                    )
+            }
+        }
+    }
+
 
     func colorForType(_ type: Clipboard.ClipboardItem.ItemType) -> Color {
         switch type {
@@ -364,7 +422,30 @@ struct ClipboardView: View {
             scrollProxy?.scrollTo(selectedID, anchor: .center)
         }
     }
+    func metadataRow(icon: String, title: String, value: String) -> some View {
+            HStack {
+                Image(systemName: icon)
+                    .foregroundColor(.secondary)
+                VStack(alignment: .leading) {
+                    Text(title)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text(value)
+                        .font(.subheadline)
+                }
+            }
+        }
 }
+
+extension Color {
+        var isDark: Bool {
+            var r, g, b, a: CGFloat
+            (r, g, b, a) = (0, 0, 0, 0)
+            NSColor(self).getRed(&r, green: &g, blue: &b, alpha: &a)
+            let luma = 0.2126 * r + 0.7152 * g + 0.0722 * b
+            return luma < 0.5
+        }
+    }
 
 struct FilterChip: View {
     let title: String
@@ -444,5 +525,52 @@ struct FlowLayout: Layout {
         }
 
         return CGSize(width: width, height: maxY)
+    }
+}
+
+@ViewBuilder
+func previewContent(for item: Clipboard.ClipboardItem) -> some View {
+    switch item.itemType {
+    case .text:
+        ScrollView {
+            Text(item.previewText)
+                .padding()
+        }
+    case .image:
+        if let image = NSImage(contentsOf: item.storageURL) {
+            Image(nsImage: image)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+        }
+    case .file:
+        if let contentType = UTType(filenameExtension: URL(fileURLWithPath: item.fileName).pathExtension) {
+            VStack {
+                Image(nsImage: NSWorkspace.shared.icon(for: contentType))
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 100, height: 100)
+                Text(item.fileName)
+                    .font(.caption)
+            }
+        }
+    case .link:
+        VStack {
+            Image(systemName: "link")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 50, height: 50)
+                .foregroundColor(.blue)
+            Text(item.previewText)
+                .font(.caption)
+                .lineLimit(3)
+        }
+    case .color:
+        if let color = Color(hex: item.previewText) {
+            color
+                .overlay(
+                    Text(item.previewText)
+                        .foregroundColor(color.isDark ? .white : .black)
+                )
+        }
     }
 }
