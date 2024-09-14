@@ -7,9 +7,10 @@ struct ClipboardItemView: View {
     @ObservedObject var cvm: Clipboard
 
     @State private var isItemHovered = false
+    @State private var isPinButtonHovered = false
     @State private var isCopyButtonHovered = false
     @State private var isDeleteButtonHovered = false
-    @State private var isPinButtonHovered = false
+    @State private var isShareButtonHovered = false
     @State private var formattedTimeAgo: String = ""
     @State private var isCopied = false
     @State private var isEditingLabels = false
@@ -18,15 +19,18 @@ struct ClipboardItemView: View {
     private let itemSize: CGFloat = 120
     private let cornerRadius: CGFloat = 8
     private let buttonSize: CGFloat = 24
-    private let copyButtonSize: CGFloat = 40
+
+    private var isSelected: Bool {
+        vm.selectedClipboardItemID == item.id
+    }
 
     private var isAnyPartHovered: Bool {
-        isItemHovered || isCopyButtonHovered || isDeleteButtonHovered || isPinButtonHovered
+        isItemHovered || isCopyButtonHovered || isDeleteButtonHovered || isPinButtonHovered || isShareButtonHovered
     }
 
     var body: some View {
         ZStack {
-            var backgroundColor: Color {
+                       var backgroundColor: Color {
                 if item.itemType == .color, let color = Color(hex: item.previewText) {
                     return color
                 } else {
@@ -78,42 +82,52 @@ struct ClipboardItemView: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .stroke(Color.white.opacity(isAnyPartHovered ? 0.5 : 0), lineWidth: 2)
+                    .stroke(Color.white.opacity(isSelected ? 1 : (isAnyPartHovered ? 0.5 : 0)), lineWidth: 2)
             )
-            .scaleEffect(isAnyPartHovered ? 1.05 : 1.0)
+            .scaleEffect(isSelected ? 1.05 : (isAnyPartHovered ? 1.02 : 1.0))
             .animation(vm.animation, value: isAnyPartHovered)
+            .animation(vm.animation, value: isSelected)
             .onHover { hovering in
                 isItemHovered = hovering
             }
-
-            copyButton
-                .opacity(isAnyPartHovered ? 1 : 0)
-                .scaleEffect(isCopyButtonHovered ? 1.2 : isAnyPartHovered ? 1.0 : 0.5)
-                .animation(vm.animation, value: isAnyPartHovered)
-                .animation(vm.animation, value: isCopyButtonHovered)
-                .onHover { hovering in
-                    isCopyButtonHovered = hovering
-                }
-
-            deleteButton
-                .opacity(isAnyPartHovered || vm.optionKeyPressed ? 1 : 0)
-                .scaleEffect(isDeleteButtonHovered ? 1.2 : isAnyPartHovered || vm.optionKeyPressed ? 1 : 0.5)
-                .animation(vm.animation, value: isAnyPartHovered || vm.optionKeyPressed)
-                .animation(vm.animation, value: isDeleteButtonHovered)
-                .onHover { hovering in
-                    isDeleteButtonHovered = hovering
-                }
-                .offset(x: itemSize / 2 - buttonSize / 2 - 4, y: -itemSize / 2 + buttonSize / 2 + 4)
-
-            pinButton
-                .opacity(isAnyPartHovered || item.isPinned ? 1 : 0)
-                .scaleEffect(isPinButtonHovered ? 1.2 : (item.isPinned && !isAnyPartHovered) ? 0.8 : isAnyPartHovered || item.isPinned ? 1 : 0.5)
-                .animation(vm.animation, value: isAnyPartHovered)
-                .animation(vm.animation, value: isPinButtonHovered)
-                .onHover { hovering in
-                    isPinButtonHovered = hovering
-                }
-                .offset(x: -itemSize / 2 + buttonSize / 2 + 4, y: -itemSize / 2 + buttonSize / 2 + 4)
+            HStack (spacing: 0) {
+                pinButton
+                    .opacity(isAnyPartHovered || item.isPinned ? 1 : 0)
+                    .scaleEffect(isPinButtonHovered ? 1.2 : (item.isPinned && !isAnyPartHovered) ? 0.8 : isAnyPartHovered || item.isPinned ? 1 : 0.5)
+                    .animation(vm.animation, value: isAnyPartHovered)
+                    .animation(vm.animation, value: isPinButtonHovered)
+                    .onHover { hovering in
+                        isPinButtonHovered = hovering
+                    }
+                Spacer()
+                shareButton
+                    .opacity(isAnyPartHovered ? 1 : 0)
+                    .scaleEffect(isShareButtonHovered ? 1.2 : isAnyPartHovered ? 0.8 : 0.5)
+                    .animation(vm.animation, value: isAnyPartHovered)
+                    .animation(vm.animation, value: isShareButtonHovered)
+                    .onHover { hovering in
+                        isShareButtonHovered = hovering
+                    }
+                Spacer()
+                copyButton
+                    .opacity(isAnyPartHovered ? 1 : 0)
+                    .scaleEffect(isCopyButtonHovered ? 1.2 : isAnyPartHovered ? 0.8 : 0.5)
+                    .animation(vm.animation, value: isAnyPartHovered)
+                    .animation(vm.animation, value: isCopyButtonHovered)
+                    .onHover { hovering in
+                        isCopyButtonHovered = hovering
+                    }
+                Spacer()
+                deleteButton
+                    .opacity(isAnyPartHovered || vm.optionKeyPressed ? 1 : 0)
+                    .scaleEffect(isDeleteButtonHovered ? 1.2 : isAnyPartHovered || vm.optionKeyPressed ? 0.8 : 0.5)
+                    .animation(vm.animation, value: isAnyPartHovered || vm.optionKeyPressed)
+                    .animation(vm.animation, value: isDeleteButtonHovered)
+                    .onHover { hovering in
+                        isDeleteButtonHovered = hovering
+                    }
+            }
+            .frame(width: itemSize - 16, height: itemSize - 8, alignment: .top)
         }
         .contextMenu {
             Button("Copy") {
@@ -145,20 +159,12 @@ struct ClipboardItemView: View {
             }
         }
         .sheet(isPresented: $isEditingLabels) {
-            labelEditView
+            LabelEditView(item: item, cvm: cvm, isPresented: $isEditingLabels)
         }
         .contentShape(Rectangle())
         .onDrag { NSItemProvider(contentsOf: item.storageURL) ?? .init() }
         .onTapGesture {
-            guard !vm.optionKeyPressed else { return }
-            vm.notchClose()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                if item.itemType == .link, let url = URL(string: item.previewText) {
-                    NSWorkspace.shared.open(url)
-                } else {
-                    NSWorkspace.shared.open(item.storageURL)
-                }
-            }
+            vm.selectClipboardItem(item.id)
         }
         .onAppear {
             updateFormattedTimeAgo()
@@ -228,61 +234,8 @@ struct ClipboardItemView: View {
             Text(formattedTimeAgo)
                 .font(.caption2)
                 .foregroundColor(.secondary)
-            // labelsView
         }
         .frame(width: itemSize - 16, alignment: .leading)
-    }
-
-    var labelsView: some View {
-        FlowLayout(alignment: .leading, spacing: 4) {
-            ForEach(Array(item.labels), id: \.self) { label in
-                Text(label)
-                    .font(.system(size: 8))
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 2)
-                    .background(labelColor(for: label))
-                    .cornerRadius(4)
-            }
-        }
-        .frame(width: itemSize - 16)
-    }
-
-    var labelEditView: some View {
-        VStack {
-            Text("Edit Labels")
-                .font(.headline)
-            
-            List {
-                ForEach(Array(userEditableLabels), id: \.self) { label in
-                    HStack {
-                        Text(label)
-                        Spacer()
-                        Button(action: {
-                            cvm.removeLabel(item.id, label: label)
-                        }) {
-                            Image(systemName: "minus.circle.fill")
-                                .foregroundColor(.red)
-                        }
-                    }
-                }
-            }
-            
-            HStack {
-                TextField("New Label", text: $newLabel)
-                Button("Add") {
-                    if !newLabel.isEmpty {
-                        cvm.addLabel(item.id, label: newLabel)
-                        newLabel = ""
-                    }
-                }
-            }
-            .padding()
-            
-            Button("Done") {
-                isEditingLabels = false
-            }
-        }
-        .frame(width: 320, height: 400)
     }
 
     var copyButton: some View {
@@ -292,30 +245,27 @@ struct ClipboardItemView: View {
             ZStack {
                 Circle()
                     .fill(copyButtonBackgroundColor)
-                    .frame(width: copyButtonSize, height: copyButtonSize)
+                    .frame(width: buttonSize, height: buttonSize)
                 Image(systemName: isCopied ? "checkmark" : "doc.on.doc")
                     .foregroundColor(copyButtonForegroundColor)
                     .font(.system(size: 14))
             }
         }
         .buttonStyle(PlainButtonStyle())
-        .frame(width: copyButtonSize, height: copyButtonSize)
+        .frame(width: buttonSize, height: buttonSize)
     }
 
     var copyButtonBackgroundColor: Color {
-        if isCopied {
-            return .green
-        } else if isCopyButtonHovered {
-            return .gray
-        } else {
-            return .gray
-        }
+        return .white.opacity(0.0)
     }
 
     var copyButtonForegroundColor: Color {
-        if isCopied || isCopyButtonHovered {
+        if isCopied {
+            return .green
+        } else if isCopyButtonHovered {
             return .white
-        } else {
+        }
+        else {
             return .white.opacity(0.7)
         }
     }
@@ -329,7 +279,7 @@ struct ClipboardItemView: View {
                     .fill(deleteButtonBackgroundColor)
                     .frame(width: buttonSize, height: buttonSize)
                 Image(systemName: "trash")
-                    .font(.system(size: 12, weight: .bold))
+                    .font(.system(size: 14, weight: .bold))
                     .foregroundColor(deleteButtonForegroundColor)
             }
         }
@@ -345,6 +295,39 @@ struct ClipboardItemView: View {
         if item.itemType == .color, let color = Color(hex: item.previewText) {
             return textColorForBackground(color ?? .white)
         } else if isDeleteButtonHovered {
+            return .white
+        } else {
+            return .white.opacity(0.7)
+        }
+    }
+
+    var shareButton: some View {
+        Button(action: {
+            ShareLink(item: item.storageURL) {
+                Text("Share")
+            }
+        }) {
+            ZStack {
+                Circle()
+                    .fill(shareButtonBackgroundColor)
+                    .frame(width: buttonSize, height: buttonSize)
+                Image(systemName: "square.and.arrow.up")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(shareButtonForegroundColor)
+            }
+        }
+        .buttonStyle(PlainButtonStyle())
+        .frame(width: buttonSize, height: buttonSize)
+    }
+
+    var shareButtonBackgroundColor: Color {
+        return .white.opacity(0.0)
+    }
+
+    var shareButtonForegroundColor: Color {
+        if item.itemType == .color, let color = Color(hex: item.previewText) {
+            return textColorForBackground(color ?? .white)
+        } else if isShareButtonHovered {
             return .white
         } else {
             return .white.opacity(0.7)
@@ -477,23 +460,6 @@ struct ClipboardItemView: View {
         }
     }
 
-    func labelColor(for label: String) -> Color {
-        if isSystemLabel(label) {
-            return .gray.opacity(0.3)
-        } else {
-            return .blue.opacity(0.3)
-        }
-    }
-
-    func isSystemLabel(_ label: String) -> Bool {
-        let systemLabels = [item.itemType.rawValue, item.sourceApp, item.deviceType?.rawValue].compactMap { $0 }
-        return systemLabels.contains(label)
-    }
-
-    var userEditableLabels: [String] {
-        return item.labels.filter { !isSystemLabel($0) }
-    }
-
     func textColorForBackground(_ backgroundColor: Color) -> Color {
         let components = backgroundColor.cgColor?.components ?? [0, 0, 0, 0]
         let brightness = (components[0] * 299 + components[1] * 587 + components[2] * 114) / 1000
@@ -501,47 +467,48 @@ struct ClipboardItemView: View {
     }
 }
 
-struct FlowLayout: Layout {
-    var alignment: HorizontalAlignment = .leading
-    var spacing: CGFloat = 4
+struct LabelEditView: View {
+    let item: Clipboard.ClipboardItem
+    @ObservedObject var cvm: Clipboard
+    @Binding var isPresented: Bool
+    @State private var newLabel = ""
 
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
-        return arrangeSubviews(sizes: sizes, in: proposal.width ?? 0)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
-        var origin = bounds.origin
-        var maxY: CGFloat = 0
-
-        for (index, subview) in subviews.enumerated() {
-            if origin.x + sizes[index].width > bounds.maxX {
-                origin.x = bounds.origin.x
-                origin.y = maxY + spacing
+    var body: some View {
+        VStack {
+            Text("Edit Labels")
+                .font(.headline)
+            
+            List {
+                ForEach(Array(item.labels), id: \.self) { label in
+                    HStack {
+                        Text(label)
+                        Spacer()
+                        Button(action: {
+                            cvm.removeLabel(item.id, label: label)
+                        }) {
+                            Image(systemName: "minus.circle.fill")
+                                .foregroundColor(.red)
+                        }
+                    }
+                }
             }
-
-            subview.place(at: origin, proposal: ProposedViewSize(sizes[index]))
-            origin.x += sizes[index].width + spacing
-            maxY = max(maxY, origin.y + sizes[index].height)
-        }
-    }
-
-    private func arrangeSubviews(sizes: [CGSize], in width: CGFloat) -> CGSize {
-        var origin = CGPoint.zero
-        var maxY: CGFloat = 0
-
-        for size in sizes {
-            if origin.x + size.width > width {
-                origin.x = 0
-                origin.y = maxY + spacing
+            
+            HStack {
+                TextField("New Label", text: $newLabel)
+                Button("Add") {
+                    if !newLabel.isEmpty {
+                        cvm.addLabel(item.id, label: newLabel)
+                        newLabel = ""
+                    }
+                }
             }
-
-            origin.x += size.width + spacing
-            maxY = max(maxY, origin.y + size.height)
+            .padding()
+            
+            Button("Done") {
+                isPresented = false
+            }
         }
-
-        return CGSize(width: width, height: maxY)
+        .frame(width: 320, height: 400)
     }
 }
 

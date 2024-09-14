@@ -88,6 +88,9 @@ class NotchViewModel: NSObject, ObservableObject {
     @Published var clipboardItems: [ClipboardItem] = []
     
     @Published var shouldScrollClipboardToStart: Bool = false
+    
+    @Published var selectedClipboardItemID: UUID?
+    @Published var isAnimatingClipboardSelection: Bool = false
 
     func notchOpen(_ reason: OpenReason) {
         contentType = .drop // Always set to Drop page when opening
@@ -100,6 +103,7 @@ class NotchViewModel: NSObject, ObservableObject {
     func notchClose() {
         openReason = .unknown
         status = .closed
+        selectedClipboardItemID = nil
     }
 
     func showSettings() {
@@ -125,7 +129,7 @@ class NotchViewModel: NSObject, ObservableObject {
     private func updateNotchSize() {
         switch contentType {
         case .clipboard:
-            notchOpenedSize = .init(width: 600, height: 320)
+            notchOpenedSize = .init(width: 600, height: selectedClipboardItemID != nil ? 600 : 325)
         default:
             notchOpenedSize = .init(width: 600, height: 160)
         }
@@ -165,6 +169,25 @@ class NotchViewModel: NSObject, ObservableObject {
     private func trimClipboardItems() {
         if clipboardItems.count > 10 {
             clipboardItems = Array(clipboardItems.prefix(10))
+        }
+    }
+
+    func selectClipboardItem(_ id: UUID?) {
+        isAnimatingClipboardSelection = true
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+            if selectedClipboardItemID == id {
+                // If the tapped item is already selected, deselect it
+                selectedClipboardItemID = nil
+            } else {
+                // Otherwise, select the tapped item
+                selectedClipboardItemID = id
+            }
+            updateNotchSize()
+        }
+        
+        // Reset the animation flag after a short delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            self.isAnimatingClipboardSelection = false
         }
     }
 }

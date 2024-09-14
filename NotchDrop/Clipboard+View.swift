@@ -1,6 +1,7 @@
 import SwiftUI
 import ColorfulX
 import UniformTypeIdentifiers
+import AppKit
 
 struct ClipboardView: View {
     @ObservedObject var vm: NotchViewModel
@@ -104,7 +105,11 @@ struct ClipboardView: View {
                 }
                 .background(Color.black)
                 panel
+                detailedView
             }
+        }
+        .onAppear {
+            setupKeyboardMonitor()
         }
     }
 
@@ -125,6 +130,29 @@ struct ClipboardView: View {
                 }
         }
         .frame(height: 152)
+        .animation(.spring(), value: vm.selectedClipboardItemID)
+    }
+
+    var detailedView: some View {
+        GeometryReader { geometry in
+            ZStack {
+                // ColorfulView(
+                //     color: .constant(ColorfulPreset.starry.colors),
+                //     speed: .constant(0.5),
+                //     transitionSpeed: .constant(50)
+                // )
+                // .opacity(0.5)
+                // .clipShape(RoundedRectangle(cornerRadius: vm.cornerRadius))
+                detailedContent
+                // RoundedRectangle(cornerRadius: vm.cornerRadius)
+                //     .foregroundStyle(.white.opacity(0.1))
+                //     .overlay {
+                        
+                //     }
+            }
+            .frame(minHeight: geometry.size.height)
+            .animation(.spring(), value: vm.selectedClipboardItemID)
+        }
     }
 
     var text: String {
@@ -143,7 +171,24 @@ struct ClipboardView: View {
             if filteredItems.isEmpty {
                 emptyView
             } else {
-                itemList
+                VStack(spacing: 0) {
+                    itemList
+                }
+            }
+        }
+    }
+
+    var detailedContent: some View {
+        Group {
+            if filteredItems.isEmpty {
+                emptyView
+            } else {
+                VStack(spacing: 0) {
+                    if let selectedID = vm.selectedClipboardItemID, 
+                       let selectedItem = filteredItems.first(where: { $0.id == selectedID }) {
+                        expandedInfoView(for: selectedItem)
+                    }
+                }
             }
         }
     }
@@ -223,6 +268,57 @@ struct ClipboardView: View {
         }
     }
 
+    func expandedInfoView(for item: Clipboard.ClipboardItem) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("More Info")
+                    .font(.headline)
+                Spacer()
+                Button(action: {
+                    vm.selectClipboardItem(nil)
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.gray)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            
+            Text("Type: \(item.itemType.rawValue.capitalized)")
+            Text("Copied from: \(item.sourceApp)")
+            Text("Date: \(item.copiedDate, formatter: itemDateFormatter)")
+            
+            if !item.labels.isEmpty {
+                Text("Tags:")
+                FlowLayout(alignment: .leading, spacing: 4) {
+                    ForEach(Array(item.labels), id: \.self) { label in
+                        Text(label)
+                            .font(.caption)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.blue.opacity(0.2))
+                            .cornerRadius(8)
+                    }
+                }
+            }
+            
+            if item.itemType == .image {
+                if let image = NSImage(contentsOf: item.storageURL) {
+                    Image(nsImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(height: 100)
+                }
+            } else if item.itemType == .file {
+                Text("File path: \(item.storageURL.path)")
+            }
+        }
+        .padding()
+        .background(Color.white.opacity(0.05))
+        .cornerRadius(vm.cornerRadius)
+        .padding(.horizontal, vm.spacing)
+        .padding(.bottom, vm.spacing)
+    }
+
     func colorForType(_ type: Clipboard.ClipboardItem.ItemType) -> Color {
         switch type {
         case .file:
@@ -235,6 +331,37 @@ struct ClipboardView: View {
             return .purple
         case .color:
             return .pink
+        }
+    }
+
+    func setupKeyboardMonitor() {
+        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            handleKeyPress(event)
+            return event
+        }
+    }
+
+    func handleKeyPress(_ event: NSEvent) {
+        guard let currentIndex = filteredItems.firstIndex(where: { $0.id == vm.selectedClipboardItemID }) else {
+            vm.selectClipboardItem(filteredItems.first?.id)
+            return
+        }
+
+        switch event.keyCode {
+        case 123: // Left arrow
+            if currentIndex > 0 {
+                vm.selectClipboardItem(filteredItems[currentIndex - 1].id)
+            }
+        case 124: // Right arrow
+            if currentIndex < filteredItems.count - 1 {
+                vm.selectClipboardItem(filteredItems[currentIndex + 1].id)
+            }
+        default:
+            break
+        }
+
+        if let selectedID = vm.selectedClipboardItemID {
+            scrollProxy?.scrollTo(selectedID, anchor: .center)
         }
     }
 }
@@ -266,5 +393,56 @@ struct ClipboardView_Previews: PreviewProvider {
             .frame(width: 550, height: 230, alignment: .center)
             .background(.black)
             .preferredColorScheme(.dark)
+    }
+}
+
+private let itemDateFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.dateStyle = .medium
+    formatter.timeStyle = .short
+    return formatter
+}()
+
+struct FlowLayout: Layout {
+    var alignment: HorizontalAlignment = .leading
+    var spacing: CGFloat = 4
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
+        return arrangeSubviews(sizes: sizes, in: proposal.width ?? 0)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var origin = bounds.origin
+        var maxY: CGFloat = 0
+
+        for (index, subview) in subviews.enumerated() {
+            let size = subview.sizeThatFits(.unspecified)
+            if origin.x + size.width > bounds.maxX {
+                origin.x = bounds.origin.x
+                origin.y = maxY + spacing
+            }
+
+            subview.place(at: origin, proposal: ProposedViewSize(size))
+            origin.x += size.width + spacing
+            maxY = max(maxY, origin.y + size.height)
+        }
+    }
+
+    private func arrangeSubviews(sizes: [CGSize], in width: CGFloat) -> CGSize {
+        var origin = CGPoint.zero
+        var maxY: CGFloat = 0
+
+        for size in sizes {
+            if origin.x + size.width > width {
+                origin.x = 0
+                origin.y = maxY + spacing
+            }
+
+            origin.x += size.width + spacing
+            maxY = max(maxY, origin.y + size.height)
+        }
+
+        return CGSize(width: width, height: maxY)
     }
 }

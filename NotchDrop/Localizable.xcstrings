@@ -334,6 +334,9 @@
         }
       }
     },
+    "Date: %@" : {
+
+    },
     "Days" : {
       "localizations" : {
         "en" : {
@@ -454,6 +457,9 @@
           }
         }
       }
+    },
+    "File path: %@" : {
+
     },
     "File Storage Time: " : {
       "localizations" : {
@@ -703,6 +709,9 @@
         }
       }
     },
+    "More Info" : {
+
+    },
     "Need Restart" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -853,6 +862,9 @@
         }
       }
     },
+    "Tags:" : {
+
+    },
     "The language has been changed. The app will restart for the changes to take effect." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -964,6 +976,9 @@
           }
         }
       }
+    },
+    "Type: %@" : {
+
     },
     "Unpin" : {
 
