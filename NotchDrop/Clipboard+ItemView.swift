@@ -25,12 +25,13 @@ struct ClipboardItemView: View {
     }
 
     private var isAnyPartHovered: Bool {
-        isItemHovered || isCopyButtonHovered || isDeleteButtonHovered || isPinButtonHovered || isShareButtonHovered
+        isItemHovered || isCopyButtonHovered || isDeleteButtonHovered || isPinButtonHovered
+            || isShareButtonHovered
     }
 
     var body: some View {
         ZStack {
-                       var backgroundColor: Color {
+            var backgroundColor: Color {
                 if item.itemType == .color, let color = Color(hex: item.previewText) {
                     return color
                 } else {
@@ -44,7 +45,7 @@ struct ClipboardItemView: View {
                     return Color.gray.opacity(0.2)
                 }
             }
-            
+
             VStack(spacing: 0) {
                 Spacer()
                 itemPreview
@@ -64,15 +65,19 @@ struct ClipboardItemView: View {
                         path.addLine(to: CGPoint(x: rect.maxX, y: 0))
                         path.addLine(to: CGPoint(x: 0, y: rect.maxY))
                         path.addLine(to: CGPoint(x: 0, y: cornerRadius))
-                        path.addArc(center: CGPoint(x: cornerRadius, y: cornerRadius),
-                                    radius: cornerRadius,
-                                    startAngle: .degrees(180),
-                                    endAngle: .degrees(270),
-                                    clockwise: false)
+                        path.addArc(
+                            center: CGPoint(x: cornerRadius, y: cornerRadius),
+                            radius: cornerRadius,
+                            startAngle: .degrees(180),
+                            endAngle: .degrees(270),
+                            clockwise: false)
                     }
                     .stroke(
                         LinearGradient(
-                            gradient: Gradient(colors: [isAnyPartHovered ? color.opacity(0) : color.opacity(0.5), color.opacity(0)]),
+                            gradient: Gradient(colors: [
+                                isAnyPartHovered ? color.opacity(0) : color.opacity(0.5),
+                                color.opacity(0),
+                            ]),
                             startPoint: .topLeading,
                             endPoint: UnitPoint(x: 0.3, y: 0.3)
                         ),
@@ -82,7 +87,9 @@ struct ClipboardItemView: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .stroke(Color.white.opacity(isSelected ? 1 : (isAnyPartHovered ? 0.5 : 0)), lineWidth: 2)
+                    .stroke(
+                        Color.white.opacity(isSelected ? 1 : (isAnyPartHovered ? 0.5 : 0)),
+                        lineWidth: 2)
             )
             .scaleEffect(isSelected ? 1.05 : (isAnyPartHovered ? 1.02 : 1.0))
             .animation(vm.animation, value: isAnyPartHovered)
@@ -90,10 +97,15 @@ struct ClipboardItemView: View {
             .onHover { hovering in
                 isItemHovered = hovering
             }
-            HStack (spacing: 0) {
+            HStack(spacing: 0) {
                 pinButton
                     .opacity(isAnyPartHovered || item.isPinned ? 1 : 0)
-                    .scaleEffect(isPinButtonHovered ? 1.2 : (item.isPinned && !isAnyPartHovered) ? 0.8 : isAnyPartHovered || item.isPinned ? 1 : 0.5)
+                    .scaleEffect(
+                        isPinButtonHovered
+                            ? 1.2
+                            : (item.isPinned && !isAnyPartHovered)
+                                ? 0.8 : isAnyPartHovered || item.isPinned ? 1 : 0.5
+                    )
                     .animation(vm.animation, value: isAnyPartHovered)
                     .animation(vm.animation, value: isPinButtonHovered)
                     .onHover { hovering in
@@ -120,7 +132,10 @@ struct ClipboardItemView: View {
                 Spacer()
                 deleteButton
                     .opacity(isAnyPartHovered || vm.optionKeyPressed ? 1 : 0)
-                    .scaleEffect(isDeleteButtonHovered ? 1.2 : isAnyPartHovered || vm.optionKeyPressed ? 0.8 : 0.5)
+                    .scaleEffect(
+                        isDeleteButtonHovered
+                            ? 1.2 : isAnyPartHovered || vm.optionKeyPressed ? 0.8 : 0.5
+                    )
                     .animation(vm.animation, value: isAnyPartHovered || vm.optionKeyPressed)
                     .animation(vm.animation, value: isDeleteButtonHovered)
                     .onHover { hovering in
@@ -187,7 +202,9 @@ struct ClipboardItemView: View {
                     .aspectRatio(contentMode: .fit)
                     .frame(width: itemSize - 16, height: 50)
             case .file:
-                if let contentType = UTType(filenameExtension: URL(fileURLWithPath: item.fileName).pathExtension) {
+                if let contentType = UTType(
+                    filenameExtension: URL(fileURLWithPath: item.fileName).pathExtension)
+                {
                     Image(nsImage: NSWorkspace.shared.icon(for: contentType))
                         .resizable()
                         .aspectRatio(contentMode: .fit)
@@ -264,8 +281,7 @@ struct ClipboardItemView: View {
             return .green
         } else if isCopyButtonHovered {
             return .white
-        }
-        else {
+        } else {
             return .white.opacity(0.7)
         }
     }
@@ -342,9 +358,12 @@ struct ClipboardItemView: View {
                 Circle()
                     .fill(pinButtonBackgroundColor)
                     .frame(width: buttonSize, height: buttonSize)
-                Image(systemName: item.isPinned && isPinButtonHovered ? "pin.slash.fill" : item.isPinned ? "pin.fill" : "pin")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(pinButtonForegroundColor)
+                Image(
+                    systemName: item.isPinned && isPinButtonHovered
+                        ? "pin.slash.fill" : item.isPinned ? "pin.fill" : "pin"
+                )
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(pinButtonForegroundColor)
             }
         }
         .buttonStyle(PlainButtonStyle())
@@ -367,13 +386,15 @@ struct ClipboardItemView: View {
 
     func copyToClipboard(contentOnly: Bool = false) {
         let items: [String: Any]
-        
+
         switch item.itemType {
         case .text, .link, .color:
             items = [NSPasteboard.PasteboardType.string.rawValue: item.previewText]
         case .image:
             if let image = NSImage(contentsOf: item.storageURL) {
-                items = [NSPasteboard.PasteboardType.tiff.rawValue: image.tiffRepresentation ?? Data()]
+                items = [
+                    NSPasteboard.PasteboardType.tiff.rawValue: image.tiffRepresentation ?? Data()
+                ]
             } else {
                 items = [:]
             }
@@ -388,21 +409,23 @@ struct ClipboardItemView: View {
                 items = [NSPasteboard.PasteboardType.fileURL.rawValue: item.storageURL]
             }
         }
-        
+
         let pasteboardItem = NSPasteboardItem()
         for (type, value) in items {
             if let data = value as? Data {
                 pasteboardItem.setData(data, forType: NSPasteboard.PasteboardType(rawValue: type))
             } else if let string = value as? String {
-                pasteboardItem.setString(string, forType: NSPasteboard.PasteboardType(rawValue: type))
+                pasteboardItem.setString(
+                    string, forType: NSPasteboard.PasteboardType(rawValue: type))
             } else if let url = value as? URL {
-                pasteboardItem.setString(url.absoluteString, forType: NSPasteboard.PasteboardType(rawValue: type))
+                pasteboardItem.setString(
+                    url.absoluteString, forType: NSPasteboard.PasteboardType(rawValue: type))
             }
         }
-        
+
         NSPasteboard.general.clearContents()
         NSPasteboard.general.writeObjects([pasteboardItem])
-    
+
         // Update the UI state
         isCopied = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
@@ -416,8 +439,9 @@ struct ClipboardItemView: View {
 
     func formattedDate(_ date: Date) -> String {
         let now = Date()
-        let components = Calendar.current.dateComponents([.second, .minute, .hour, .day, .weekOfYear, .month, .year], from: date, to: now)
-        
+        let components = Calendar.current.dateComponents(
+            [.second, .minute, .hour, .day, .weekOfYear, .month, .year], from: date, to: now)
+
         if let year = components.year, year > 0 {
             return year == 1 ? "1 year ago" : "\(year) years ago"
         } else if let month = components.month, month > 0 {
@@ -477,7 +501,7 @@ struct LabelEditView: View {
         VStack {
             Text("Edit Labels")
                 .font(.headline)
-            
+
             List {
                 ForEach(Array(item.labels), id: \.self) { label in
                     HStack {
@@ -492,7 +516,7 @@ struct LabelEditView: View {
                     }
                 }
             }
-            
+
             HStack {
                 TextField("New Label", text: $newLabel)
                 Button("Add") {
@@ -503,7 +527,7 @@ struct LabelEditView: View {
                 }
             }
             .padding()
-            
+
             Button("Done") {
                 isPresented = false
             }
@@ -517,13 +541,16 @@ extension Color {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
         var int: UInt64 = 0
         Scanner(string: hex).scanHexInt64(&int)
-        let a, r, g, b: UInt64
+        let a: UInt64
+        let r: UInt64
+        let g: UInt64
+        let b: UInt64
         switch hex.count {
-        case 3: // RGB (12-bit)
+        case 3:  // RGB (12-bit)
             (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
+        case 6:  // RGB (24-bit)
             (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
+        case 8:  // ARGB (32-bit)
             (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
         default:
             return nil
@@ -532,7 +559,7 @@ extension Color {
             .sRGB,
             red: Double(r) / 255,
             green: Double(g) / 255,
-            blue:  Double(b) / 255,
+            blue: Double(b) / 255,
             opacity: Double(a) / 255
         )
     }

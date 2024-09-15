@@ -21,18 +21,19 @@ class Clipboard: ObservableObject {
             $customStorageTimeUnit.removeDuplicates()
         )
         .map { selectedFileStorageTime, customStorageTime, customStorageTimeUnit in
-            let customTime = switch customStorageTimeUnit {
-            case .hours:
-                TimeInterval(customStorageTime) * 60 * 60
-            case .days:
-                TimeInterval(customStorageTime) * 60 * 60 * 24
-            case .weeks:
-                TimeInterval(customStorageTime) * 60 * 60 * 24 * 7
-            case .months:
-                TimeInterval(customStorageTime) * 60 * 60 * 24 * 30
-            case .years:
-                TimeInterval(customStorageTime) * 60 * 60 * 24 * 365
-            }
+            let customTime =
+                switch customStorageTimeUnit {
+                case .hours:
+                    TimeInterval(customStorageTime) * 60 * 60
+                case .days:
+                    TimeInterval(customStorageTime) * 60 * 60 * 24
+                case .weeks:
+                    TimeInterval(customStorageTime) * 60 * 60 * 24 * 7
+                case .months:
+                    TimeInterval(customStorageTime) * 60 * 60 * 24 * 30
+                case .years:
+                    TimeInterval(customStorageTime) * 60 * 60 * 24 * 365
+                }
             let ans = selectedFileStorageTime.toTimeInterval(customTime: customTime)
             print("[*] using interval \(ans) to keep files")
             return ans
@@ -71,9 +72,11 @@ class Clipboard: ObservableObject {
         do {
             let sourceApp = detectSourceApp()
             let deviceType = detectDeviceType()
-            let items = try urls.map { try ClipboardItem(url: $0, sourceApp: sourceApp, deviceType: deviceType) }
+            let items = try urls.map {
+                try ClipboardItem(url: $0, sourceApp: sourceApp, deviceType: deviceType)
+            }
             DispatchQueue.main.async {
-                items.forEach { self.items.updateOrInsert($0, at: 0)}
+                items.forEach { self.items.updateOrInsert($0, at: 0) }
                 self.sortItems()
                 self.isLoading -= 1
             }
@@ -154,15 +157,16 @@ class Clipboard: ObservableObject {
     }
 
     private func sortItems() {
-        items = OrderedSet(items.sorted { item1, item2 in
-            if item1.isPinned && !item2.isPinned {
-                return true
-            } else if !item1.isPinned && item2.isPinned {
-                return false
-            } else {
-                return item1.copiedDate > item2.copiedDate
-            }
-        })
+        items = OrderedSet(
+            items.sorted { item1, item2 in
+                if item1.isPinned && !item2.isPinned {
+                    return true
+                } else if !item1.isPinned && item2.isPinned {
+                    return false
+                } else {
+                    return item1.copiedDate > item2.copiedDate
+                }
+            })
     }
 
     private func detectSourceApp() -> String? {
@@ -262,12 +266,15 @@ extension Clipboard {
     func loadString(_ string: String) {
         DispatchQueue.main.asyncAndWait { isLoading += 1 }
         do {
-            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension("txt")
+            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(
+                UUID().uuidString
+            ).appendingPathExtension("txt")
             try string.write(to: tempURL, atomically: true, encoding: .utf8)
             let sourceApp = detectSourceApp()
             let deviceType = detectDeviceType()
             let itemType = determineItemType(from: string)
-            let item = try ClipboardItem(url: tempURL, itemType: itemType, sourceApp: sourceApp, deviceType: deviceType)
+            let item = try ClipboardItem(
+                url: tempURL, itemType: itemType, sourceApp: sourceApp, deviceType: deviceType)
             DispatchQueue.main.async {
                 self.items.updateOrInsert(item, at: 0)
                 self.sortItems()
@@ -285,10 +292,13 @@ extension Clipboard {
     func loadImage(_ image: NSImage) {
         DispatchQueue.main.asyncAndWait { isLoading += 1 }
         do {
-            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension("png")
+            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(
+                UUID().uuidString
+            ).appendingPathExtension("png")
             if let tiffData = image.tiffRepresentation,
-               let bitmapImage = NSBitmapImageRep(data: tiffData),
-               let pngData = bitmapImage.representation(using: .png, properties: [:]) {
+                let bitmapImage = NSBitmapImageRep(data: tiffData),
+                let pngData = bitmapImage.representation(using: .png, properties: [:])
+            {
                 try pngData.write(to: tempURL)
             }
             let sourceApp = detectSourceApp()

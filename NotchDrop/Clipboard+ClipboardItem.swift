@@ -31,7 +31,10 @@ extension Clipboard {
             case other
         }
 
-        init(url: URL, itemType: ItemType? = nil, sourceApp: String? = nil, deviceType: DeviceType? = .mac) throws {
+        init(
+            url: URL, itemType: ItemType? = nil, sourceApp: String? = nil,
+            deviceType: DeviceType? = .mac
+        ) throws {
             assert(!Thread.isMainThread)
 
             id = UUID()
@@ -47,18 +50,21 @@ extension Clipboard {
                 self.itemType = forcedItemType
                 let content = try String(contentsOf: url, encoding: .utf8)
                 previewText = content.prefix(50).trimmingCharacters(in: .whitespacesAndNewlines)
-                workspacePreviewImageData = NSWorkspace.shared.icon(forFileType: "txt").pngRepresentation
+                workspacePreviewImageData =
+                    NSWorkspace.shared.icon(forFileType: "txt").pngRepresentation
             } else if url.pathExtension.lowercased() == "txt" {
                 let content = try String(contentsOf: url, encoding: .utf8)
                 self.itemType = Self.determineItemType(from: content)
                 previewText = content.prefix(50).trimmingCharacters(in: .whitespacesAndNewlines)
-                workspacePreviewImageData = NSWorkspace.shared.icon(forFileType: "txt").pngRepresentation
+                workspacePreviewImageData =
+                    NSWorkspace.shared.icon(forFileType: "txt").pngRepresentation
             } else if ["png", "jpg", "jpeg", "gif"].contains(url.pathExtension.lowercased()) {
                 self.itemType = .image
                 if let image = NSImage(contentsOf: url) {
                     workspacePreviewImageData = Self.compressAndResizeImage(image)
                 } else {
-                    workspacePreviewImageData = NSWorkspace.shared.icon(forFileType: url.pathExtension).pngRepresentation
+                    workspacePreviewImageData =
+                        NSWorkspace.shared.icon(forFileType: url.pathExtension).pngRepresentation
                 }
                 previewText = ""
             } else {
@@ -97,7 +103,9 @@ extension Clipboard {
         }
 
         static func determineItemType(from content: String) -> ItemType {
-            if content.lowercased().hasPrefix("http://") || content.lowercased().hasPrefix("https://") {
+            if content.lowercased().hasPrefix("http://")
+                || content.lowercased().hasPrefix("https://")
+            {
                 return .link
             } else if content.matches(regex: "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$") {
                 return .color
@@ -107,7 +115,7 @@ extension Clipboard {
         }
 
         static func compressAndResizeImage(_ image: NSImage) -> Data {
-            let maxSize: CGFloat = 64 // Max width or height
+            let maxSize: CGFloat = 64  // Max width or height
             let aspectRatio = image.size.width / image.size.height
             let newSize: NSSize
 
@@ -118,7 +126,7 @@ extension Clipboard {
                     newSize = NSSize(width: maxSize * aspectRatio, height: maxSize)
                 }
             } else {
-                newSize = image.size // Keep original size if it's already smaller
+                newSize = image.size  // Keep original size if it's already smaller
             }
 
             let resizedImage = NSImage(size: newSize)
@@ -128,7 +136,8 @@ extension Clipboard {
             resizedImage.unlockFocus()
 
             guard let tiffData = resizedImage.tiffRepresentation,
-                  let bitmapImage = NSBitmapImageRep(data: tiffData) else {
+                let bitmapImage = NSBitmapImageRep(data: tiffData)
+            else {
                 return Data()
             }
 
@@ -181,10 +190,11 @@ extension Clipboard.ClipboardItem {
         let resizedImage = NSImage(size: newSize)
         resizedImage.lockFocus()
         NSGraphicsContext.current?.imageInterpolation = .high
-        image.draw(in: NSRect(origin: .zero, size: newSize),
-                   from: NSRect(origin: .zero, size: image.size),
-                   operation: .sourceOver,
-                   fraction: 1.0)
+        image.draw(
+            in: NSRect(origin: .zero, size: newSize),
+            from: NSRect(origin: .zero, size: image.size),
+            operation: .sourceOver,
+            fraction: 1.0)
         resizedImage.unlockFocus()
         return resizedImage
     }
@@ -192,7 +202,7 @@ extension Clipboard.ClipboardItem {
     var shouldClean: Bool {
         if !FileManager.default.fileExists(atPath: storageURL.path) { return true }
         let keepInterval = Clipboard.shared.keepInterval
-        guard keepInterval > 0 else { return true } // avoid non-reasonable value deleting user's files
+        guard keepInterval > 0 else { return true }  // avoid non-reasonable value deleting user's files
         if Date().timeIntervalSince(copiedDate) > Clipboard.shared.keepInterval { return true }
         return false
     }

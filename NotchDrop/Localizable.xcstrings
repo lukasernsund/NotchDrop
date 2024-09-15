@@ -334,9 +334,6 @@
         }
       }
     },
-    "Date: %@" : {
-
-    },
     "Days" : {
       "localizations" : {
         "en" : {
@@ -457,9 +454,6 @@
           }
         }
       }
-    },
-    "File path: %@" : {
-
     },
     "File Storage Time: " : {
       "localizations" : {
@@ -708,9 +702,6 @@
           }
         }
       }
-    },
-    "More Info" : {
-
     },
     "Need Restart" : {
       "extractionState" : "manual",
@@ -976,9 +967,6 @@
           }
         }
       }
-    },
-    "Type: %@" : {
-
     },
     "Unpin" : {
 

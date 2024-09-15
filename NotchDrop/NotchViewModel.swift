@@ -93,7 +93,7 @@ class NotchViewModel: NSObject, ObservableObject {
     @Published var isAnimatingClipboardSelection: Bool = false
 
     func notchOpen(_ reason: OpenReason) {
-        contentType = .drop // Always set to Drop page when opening
+        // contentType = .drop// Always set to Drop page when opening
         openReason = reason
         status = .opened
         shouldScrollClipboardToStart = true

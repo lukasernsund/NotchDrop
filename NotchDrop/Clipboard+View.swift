@@ -1,7 +1,7 @@
-import SwiftUI
-import ColorfulX
-import UniformTypeIdentifiers
 import AppKit
+import ColorfulX
+import SwiftUI
+import UniformTypeIdentifiers
 
 struct ClipboardView: View {
     @ObservedObject var vm: NotchViewModel
@@ -27,7 +27,8 @@ struct ClipboardView: View {
         case .never:
             return NSLocalizedString("forever", comment: "")
         case .custom:
-            let localizedTimeUnit = NSLocalizedString(cvm.customStorageTimeUnit.localized.lowercased(), comment: "")
+            let localizedTimeUnit = NSLocalizedString(
+                cvm.customStorageTimeUnit.localized.lowercased(), comment: "")
             return "\(cvm.customStorageTime) \(localizedTimeUnit)"
         }
     }
@@ -38,16 +39,16 @@ struct ClipboardView: View {
 
     var filteredItems: [Clipboard.ClipboardItem] {
         let filtered = cvm.items.filter { item in
-            let matchesSearch = searchText.isEmpty ||
-                item.fileName.localizedCaseInsensitiveContains(searchText) ||
-                item.previewText.localizedCaseInsensitiveContains(searchText) ||
-                item.labels.contains { $0.localizedCaseInsensitiveContains(searchText) }
-            
+            let matchesSearch =
+                searchText.isEmpty || item.fileName.localizedCaseInsensitiveContains(searchText)
+                || item.previewText.localizedCaseInsensitiveContains(searchText)
+                || item.labels.contains { $0.localizedCaseInsensitiveContains(searchText) }
+
             let matchesFilter = selectedFilters.isEmpty || selectedFilters.contains(item.itemType)
-            
+
             return matchesSearch && matchesFilter
         }
-        
+
         return filtered.sorted { item1, item2 in
             if item1.isPinned && !item2.isPinned {
                 return true
@@ -66,7 +67,7 @@ struct ClipboardView: View {
                 .onTapGesture {
                     isSearchFocused = false
                 }
-            
+
             VStack(spacing: 0) {
                 HStack(spacing: 0) {
                     Text("Clipboard")
@@ -74,9 +75,9 @@ struct ClipboardView: View {
                         .fontWeight(.bold)
                         .padding(.leading, vm.spacing)
                         .padding(.vertical, vm.spacing / 4)
-                    
+
                     Spacer()
-                    
+
                     Button {
                         cvm.removeAll()
                     } label: {
@@ -96,9 +97,9 @@ struct ClipboardView: View {
                     searchBar
                         .padding(.leading, vm.spacing)
                         .padding(.vertical, vm.spacing)
-                    
+
                     Spacer()
-                    
+
                     filterOptions
                         .padding(.trailing, vm.spacing)
                         .padding(.vertical, vm.spacing / 4)
@@ -120,11 +121,13 @@ struct ClipboardView: View {
                 speed: .constant(0.5),
                 transitionSpeed: .constant(50)
             )
-            .opacity(0.5)
+            // .opacity(0.5) // HERE
+            .opacity(0.0)
             .clipShape(RoundedRectangle(cornerRadius: vm.cornerRadius))
 
             RoundedRectangle(cornerRadius: vm.cornerRadius)
-                .foregroundStyle(.white.opacity(0.1))
+                // .foregroundStyle(.white.opacity(0.1)) // HERE
+                .foregroundStyle(.white.opacity(0.0))
                 .overlay {
                     content
                 }
@@ -136,8 +139,8 @@ struct ClipboardView: View {
     var detailedView: some View {
         GeometryReader { geometry in
             detailedContent
-            .frame(minHeight: geometry.size.height)
-            .animation(.spring(), value: vm.selectedClipboardItemID)
+                .frame(minHeight: geometry.size.height)
+                .animation(.spring(), value: vm.selectedClipboardItemID)
         }
     }
 
@@ -170,8 +173,9 @@ struct ClipboardView: View {
                 emptyView
             } else {
                 VStack(spacing: 0) {
-                    if let selectedID = vm.selectedClipboardItemID, 
-                       let selectedItem = filteredItems.first(where: { $0.id == selectedID }) {
+                    if let selectedID = vm.selectedClipboardItemID,
+                        let selectedItem = filteredItems.first(where: { $0.id == selectedID })
+                    {
                         expandedInfoView(for: selectedItem)
                     }
                 }
@@ -244,7 +248,8 @@ struct ClipboardView: View {
                 .padding(vm.spacing)
                 .animation(.spring(), value: filteredItems)
             }
-            .background(Color.white.opacity(0.1))
+            // .background(Color.white.opacity(0.1)) // HERE
+            .background(Color.white.opacity(0.0))
             .cornerRadius(vm.cornerRadius)
             .frame(height: 152)
             .scrollIndicators(.never)
@@ -269,30 +274,30 @@ struct ClipboardView: View {
                         .font(.headline)
                         .foregroundColor(colorForType(item.itemType))
                     Spacer()
-                    if item.itemType == .text {
-                        Button(action: {
-                            // Implement edit action here
-                        }) {
-                            Image(systemName: "arrow_up")
-                                .foregroundColor(.blue)
-                        }
-                        .buttonStyle(PlainButtonStyle())
+                    Button(action: {
+                        vm.selectClipboardItem(nil)  // Close the detailed view
+                    }) {
+                        Image(systemName: "chevron.up")
+                            .foregroundColor(.white)
                     }
+                    .buttonStyle(PlainButtonStyle())
                 }
 
-                metadataRow(icon: "clock", title: "Copied", value: itemDateFormatter.string(from: item.copiedDate))
+                metadataRow(
+                    icon: "clock", title: "Copied",
+                    value: itemDateFormatter.string(from: item.copiedDate))
                 metadataRow(icon: "app.badge", title: "Source", value: item.sourceApp ?? "Unknown")
 
                 if item.itemType == .file {
                     metadataRow(icon: "folder", title: "Path", value: item.storageURL.path)
                 }
-                
+
                 if !item.labels.isEmpty {
                     Text("Tags:")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     FlowLayout(alignment: .leading, spacing: 4) {
-                        ForEach(Array(item.labels), id: \.self) { label in
+                        ForEach(Array(item.labels.sorted()), id: \.self) { label in
                             Text(label)
                                 .font(.caption)
                                 .padding(.horizontal, 8)
@@ -302,17 +307,17 @@ struct ClipboardView: View {
                         }
                     }
                 }
-                
+
                 Spacer()
-                
+
                 HStack {
                     Button("Copy") {
                         // Implement copy action
                     }
                     .buttonStyle(.bordered)
-                    
+
                     Spacer()
-                    
+
                     Button("Delete") {
                         cvm.delete(item.id)
                         vm.selectClipboardItem(nil)
@@ -332,11 +337,12 @@ struct ClipboardView: View {
     func previewContent(for item: Clipboard.ClipboardItem) -> some View {
         switch item.itemType {
         case .text:
-        ScrollView {
-            Text(item.previewText)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding()
-                }
+            ScrollView {
+                Text(item.previewText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .textSelection(.enabled)  // Make text selectable
+            }
         case .image:
             if let image = NSImage(contentsOf: item.storageURL) {
                 Image(nsImage: image)
@@ -344,7 +350,9 @@ struct ClipboardView: View {
                     .aspectRatio(contentMode: .fit)
             }
         case .file:
-            if let contentType = UTType(filenameExtension: URL(fileURLWithPath: item.fileName).pathExtension) {
+            if let contentType = UTType(
+                filenameExtension: URL(fileURLWithPath: item.fileName).pathExtension)
+            {
                 VStack {
                     Image(nsImage: NSWorkspace.shared.icon(for: contentType))
                         .resizable()
@@ -376,7 +384,6 @@ struct ClipboardView: View {
         }
     }
 
-
     func colorForType(_ type: Clipboard.ClipboardItem.ItemType) -> Color {
         switch type {
         case .file:
@@ -400,17 +407,21 @@ struct ClipboardView: View {
     }
 
     func handleKeyPress(_ event: NSEvent) {
-        guard let currentIndex = filteredItems.firstIndex(where: { $0.id == vm.selectedClipboardItemID }) else {
+        guard
+            let currentIndex = filteredItems.firstIndex(where: {
+                $0.id == vm.selectedClipboardItemID
+            })
+        else {
             vm.selectClipboardItem(filteredItems.first?.id)
             return
         }
 
         switch event.keyCode {
-        case 123: // Left arrow
+        case 123:  // Left arrow
             if currentIndex > 0 {
                 vm.selectClipboardItem(filteredItems[currentIndex - 1].id)
             }
-        case 124: // Right arrow
+        case 124:  // Right arrow
             if currentIndex < filteredItems.count - 1 {
                 vm.selectClipboardItem(filteredItems[currentIndex + 1].id)
             }
@@ -423,29 +434,32 @@ struct ClipboardView: View {
         }
     }
     func metadataRow(icon: String, title: String, value: String) -> some View {
-            HStack {
-                Image(systemName: icon)
+        HStack {
+            Image(systemName: icon)
+                .foregroundColor(.secondary)
+            VStack(alignment: .leading) {
+                Text(title)
+                    .font(.caption)
                     .foregroundColor(.secondary)
-                VStack(alignment: .leading) {
-                    Text(title)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    Text(value)
-                        .font(.subheadline)
-                }
+                Text(value)
+                    .font(.subheadline)
             }
         }
+    }
 }
 
 extension Color {
-        var isDark: Bool {
-            var r, g, b, a: CGFloat
-            (r, g, b, a) = (0, 0, 0, 0)
-            NSColor(self).getRed(&r, green: &g, blue: &b, alpha: &a)
-            let luma = 0.2126 * r + 0.7152 * g + 0.0722 * b
-            return luma < 0.5
-        }
+    var isDark: Bool {
+        var r: CGFloat
+        var g: CGFloat
+        var b: CGFloat
+        var a: CGFloat
+        (r, g, b, a) = (0, 0, 0, 0)
+        NSColor(self).getRed(&r, green: &g, blue: &b, alpha: &a)
+        let luma = 0.2126 * r + 0.7152 * g + 0.0722 * b
+        return luma < 0.5
     }
+}
 
 struct FilterChip: View {
     let title: String
@@ -493,7 +507,9 @@ struct FlowLayout: Layout {
         return arrangeSubviews(sizes: sizes, in: proposal.width ?? 0)
     }
 
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+    func placeSubviews(
+        in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()
+    ) {
         var origin = bounds.origin
         var maxY: CGFloat = 0
 
@@ -525,52 +541,5 @@ struct FlowLayout: Layout {
         }
 
         return CGSize(width: width, height: maxY)
-    }
-}
-
-@ViewBuilder
-func previewContent(for item: Clipboard.ClipboardItem) -> some View {
-    switch item.itemType {
-    case .text:
-        ScrollView {
-            Text(item.previewText)
-                .padding()
-        }
-    case .image:
-        if let image = NSImage(contentsOf: item.storageURL) {
-            Image(nsImage: image)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-        }
-    case .file:
-        if let contentType = UTType(filenameExtension: URL(fileURLWithPath: item.fileName).pathExtension) {
-            VStack {
-                Image(nsImage: NSWorkspace.shared.icon(for: contentType))
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 100, height: 100)
-                Text(item.fileName)
-                    .font(.caption)
-            }
-        }
-    case .link:
-        VStack {
-            Image(systemName: "link")
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 50, height: 50)
-                .foregroundColor(.blue)
-            Text(item.previewText)
-                .font(.caption)
-                .lineLimit(3)
-        }
-    case .color:
-        if let color = Color(hex: item.previewText) {
-            color
-                .overlay(
-                    Text(item.previewText)
-                        .foregroundColor(color.isDark ? .white : .black)
-                )
-        }
     }
 }

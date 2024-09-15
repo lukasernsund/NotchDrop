@@ -22,8 +22,8 @@ extension NSScreen {
     var isBuildinDisplay: Bool {
         let screenNumberKey = NSDeviceDescriptionKey(rawValue: "NSScreenNumber")
         guard let id = deviceDescription[screenNumberKey],
-              let rid = (id as? NSNumber)?.uint32Value,
-              CGDisplayIsBuiltin(rid) == 1
+            let rid = (id as? NSNumber)?.uint32Value,
+            CGDisplayIsBuiltin(rid) == 1
         else { return false }
         return true
     }

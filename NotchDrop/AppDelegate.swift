@@ -66,8 +66,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func determineIfProcessIdentifierMatches() {
         let pid = String(NSRunningApplication.current.processIdentifier)
         let content = (try? String(contentsOf: pidFile)) ?? ""
-        guard pid.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-            == content.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard
+            pid.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                == content.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         else {
             NSApp.terminate(nil)
             return
@@ -76,16 +77,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func makeKeyAndVisibleIfNeeded() {
         guard let controller = mainWindowController,
-              let window = controller.window,
-              let vm = controller.vm,
-              vm.status == .opened
+            let window = controller.window,
+            let vm = controller.vm,
+            vm.status == .opened
         else { return }
         window.makeKeyAndOrderFront(nil)
     }
 
     func applicationShouldHandleReopen(_: NSApplication, hasVisibleWindows _: Bool) -> Bool {
         guard let controller = mainWindowController,
-              let vm = controller.vm
+            let vm = controller.vm
         else { return true }
         vm.notchOpen(.click)
         return true

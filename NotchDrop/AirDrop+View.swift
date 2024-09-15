@@ -30,16 +30,18 @@ struct AirDropView: View {
 
     var dropArea: some View {
         ColorfulView(
-            color: .init(get: {
-                if targeting {
-                    ColorfulPreset.neon.colors
-                } else {
-                    ColorfulPreset.aurora.colors
-                }
-            }, set: { _ in }),
-            speed: .init(get: {
-                targeting ? 1.5 : 0
-            }, set: { _ in }),
+            color: .init(
+                get: {
+                    if targeting {
+                        ColorfulPreset.neon.colors
+                    } else {
+                        ColorfulPreset.aurora.colors
+                    }
+                }, set: { _ in }),
+            speed: .init(
+                get: {
+                    targeting ? 1.5 : 0
+                }, set: { _ in }),
             transitionSpeed: .constant(25)
         )
         .opacity(0.5)
