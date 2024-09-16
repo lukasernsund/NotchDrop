@@ -49,13 +49,13 @@ extension Clipboard {
             if let forcedItemType = itemType {
                 self.itemType = forcedItemType
                 let content = try String(contentsOf: url, encoding: .utf8)
-                previewText = content.prefix(50).trimmingCharacters(in: .whitespacesAndNewlines)
+                previewText = content.prefix(1000).trimmingCharacters(in: .whitespacesAndNewlines)
                 workspacePreviewImageData =
                     NSWorkspace.shared.icon(forFileType: "txt").pngRepresentation
             } else if url.pathExtension.lowercased() == "txt" {
                 let content = try String(contentsOf: url, encoding: .utf8)
                 self.itemType = Self.determineItemType(from: content)
-                previewText = content.prefix(50).trimmingCharacters(in: .whitespacesAndNewlines)
+                previewText = content.prefix(1000).trimmingCharacters(in: .whitespacesAndNewlines)
                 workspacePreviewImageData =
                     NSWorkspace.shared.icon(forFileType: "txt").pngRepresentation
             } else if ["png", "jpg", "jpeg", "gif"].contains(url.pathExtension.lowercased()) {

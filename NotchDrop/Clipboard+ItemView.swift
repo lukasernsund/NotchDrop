@@ -114,7 +114,7 @@ struct ClipboardItemView: View {
                 Spacer()
                 shareButton
                     .opacity(isAnyPartHovered ? 1 : 0)
-                    .scaleEffect(isShareButtonHovered ? 1.2 : isAnyPartHovered ? 0.8 : 0.5)
+                    .scaleEffect(isShareButtonHovered ? 1.2 : isAnyPartHovered ? 1.0 : 0.5)
                     .animation(vm.animation, value: isAnyPartHovered)
                     .animation(vm.animation, value: isShareButtonHovered)
                     .onHover { hovering in
@@ -123,7 +123,7 @@ struct ClipboardItemView: View {
                 Spacer()
                 copyButton
                     .opacity(isAnyPartHovered ? 1 : 0)
-                    .scaleEffect(isCopyButtonHovered ? 1.2 : isAnyPartHovered ? 0.8 : 0.5)
+                    .scaleEffect(isCopyButtonHovered ? 1.2 : isAnyPartHovered ? 1.0 : 0.5)
                     .animation(vm.animation, value: isAnyPartHovered)
                     .animation(vm.animation, value: isCopyButtonHovered)
                     .onHover { hovering in
@@ -134,7 +134,7 @@ struct ClipboardItemView: View {
                     .opacity(isAnyPartHovered || vm.optionKeyPressed ? 1 : 0)
                     .scaleEffect(
                         isDeleteButtonHovered
-                            ? 1.2 : isAnyPartHovered || vm.optionKeyPressed ? 0.8 : 0.5
+                            ? 1.2 : isAnyPartHovered || vm.optionKeyPressed ? 1.0 : 0.5
                     )
                     .animation(vm.animation, value: isAnyPartHovered || vm.optionKeyPressed)
                     .animation(vm.animation, value: isDeleteButtonHovered)
@@ -142,7 +142,7 @@ struct ClipboardItemView: View {
                         isDeleteButtonHovered = hovering
                     }
             }
-            .frame(width: itemSize - 16, height: itemSize - 8, alignment: .top)
+            .frame(width: itemSize - 32, height: itemSize - 8, alignment: .top)
         }
         .contextMenu {
             Button("Copy") {
@@ -273,6 +273,11 @@ struct ClipboardItemView: View {
     }
 
     var copyButtonBackgroundColor: Color {
+        // if isAnyPartHovered {
+        //     return .white.opacity(0.1)
+        // } else {
+        //     return .white.opacity(0.0)
+        // }
         return .white.opacity(0.0)
     }
 
@@ -295,7 +300,7 @@ struct ClipboardItemView: View {
                     .fill(deleteButtonBackgroundColor)
                     .frame(width: buttonSize, height: buttonSize)
                 Image(systemName: "trash")
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: 14))
                     .foregroundColor(deleteButtonForegroundColor)
             }
         }
@@ -304,6 +309,11 @@ struct ClipboardItemView: View {
     }
 
     var deleteButtonBackgroundColor: Color {
+        // if isAnyPartHovered {
+        //     return .white.opacity(0.1)
+        // } else {
+        //     return .white.opacity(0.0)
+        // }
         return .white.opacity(0.0)
     }
 
@@ -328,7 +338,7 @@ struct ClipboardItemView: View {
                     .fill(shareButtonBackgroundColor)
                     .frame(width: buttonSize, height: buttonSize)
                 Image(systemName: "square.and.arrow.up")
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: 14))
                     .foregroundColor(shareButtonForegroundColor)
             }
         }
@@ -337,6 +347,11 @@ struct ClipboardItemView: View {
     }
 
     var shareButtonBackgroundColor: Color {
+        // if isAnyPartHovered {
+        //     return .white.opacity(0.1)
+        // } else {
+        //     return .white.opacity(0.0)
+        // }
         return .white.opacity(0.0)
     }
 
@@ -362,7 +377,7 @@ struct ClipboardItemView: View {
                     systemName: item.isPinned && isPinButtonHovered
                         ? "pin.slash.fill" : item.isPinned ? "pin.fill" : "pin"
                 )
-                .font(.system(size: 12, weight: .bold))
+                .font(.system(size: 14))
                 .foregroundColor(pinButtonForegroundColor)
             }
         }
@@ -371,6 +386,11 @@ struct ClipboardItemView: View {
     }
 
     var pinButtonBackgroundColor: Color {
+        // if isAnyPartHovered {
+        //     return .white.opacity(0.1)
+        // } else {
+        //     return .white.opacity(0.0)
+        // }
         return .white.opacity(0.0)
     }
 

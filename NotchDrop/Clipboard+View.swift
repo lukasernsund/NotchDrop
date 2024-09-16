@@ -121,12 +121,10 @@ struct ClipboardView: View {
                 speed: .constant(0.5),
                 transitionSpeed: .constant(50)
             )
-            // .opacity(0.5) // HERE
             .opacity(0.0)
             .clipShape(RoundedRectangle(cornerRadius: vm.cornerRadius))
 
             RoundedRectangle(cornerRadius: vm.cornerRadius)
-                // .foregroundStyle(.white.opacity(0.1)) // HERE
                 .foregroundStyle(.white.opacity(0.0))
                 .overlay {
                     content
@@ -248,7 +246,6 @@ struct ClipboardView: View {
                 .padding(vm.spacing)
                 .animation(.spring(), value: filteredItems)
             }
-            // .background(Color.white.opacity(0.1)) // HERE
             .background(Color.white.opacity(0.0))
             .cornerRadius(vm.cornerRadius)
             .frame(height: 152)
@@ -288,8 +285,24 @@ struct ClipboardView: View {
                     value: itemDateFormatter.string(from: item.copiedDate))
                 metadataRow(icon: "app.badge", title: "Source", value: item.sourceApp ?? "Unknown")
 
-                if item.itemType == .file {
-                    metadataRow(icon: "folder", title: "Path", value: item.storageURL.path)
+                // File path row
+                metadataRow(icon: "folder", title: "Path", value: item.storageURL.path) {
+                    NSWorkspace.shared.selectFile(
+                        item.storageURL.path, inFileViewerRootedAtPath: "")
+                }
+
+                // Link row
+                if item.itemType == .link, let url = URL(string: item.previewText) {
+                    metadataRow(icon: "link", title: "Link", value: item.previewText) {
+                        NSWorkspace.shared.open(url)
+                    }
+                }
+
+                // Color information rows
+                if item.itemType == .color, let color = Color(hex: item.previewText) {
+                    metadataRow(icon: "eyedropper", title: "Hex", value: item.previewText)
+                    metadataRow(icon: "eyedropper.full", title: "RGB", value: color.rgbString)
+                    metadataRow(icon: "eyedropper.halffull", title: "HSL", value: color.hslString)
                 }
 
                 if !item.labels.isEmpty {
@@ -331,6 +344,24 @@ struct ClipboardView: View {
         .padding()
         .background(Color.white.opacity(0.05))
         .cornerRadius(vm.cornerRadius)
+    }
+
+    func metadataRow(icon: String, title: String, value: String, action: (() -> Void)? = nil) -> some View {
+        HStack {
+            Image(systemName: icon)
+                .foregroundColor(.secondary)
+            VStack(alignment: .leading) {
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                if let action = action {
+                    ClickableText(text: value, action: action)
+                } else {
+                    Text(value)
+                        .font(.subheadline)
+                }
+            }
+        }
     }
 
     @ViewBuilder
@@ -448,6 +479,24 @@ struct ClipboardView: View {
     }
 }
 
+struct ClickableText: View {
+    let text: String
+    let action: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Text(text)
+            .font(.subheadline)
+            .foregroundColor(.blue)
+            .underline(isHovered)
+            .onHover { hovering in
+                isHovered = hovering
+            }
+            .onTapGesture(perform: action)
+            .animation(.easeInOut(duration: 0.2), value: isHovered)
+    }
+}
+
 extension Color {
     var isDark: Bool {
         var r: CGFloat
@@ -458,6 +507,42 @@ extension Color {
         NSColor(self).getRed(&r, green: &g, blue: &b, alpha: &a)
         let luma = 0.2126 * r + 0.7152 * g + 0.0722 * b
         return luma < 0.5
+    }
+
+    var rgbString: String {
+        let components = NSColor(self).cgColor.components ?? []
+        let r = Int((components[0] * 255).rounded())
+        let g = Int((components[1] * 255).rounded())
+        let b = Int((components[2] * 255).rounded())
+        return "RGB(\(r), \(g), \(b))"
+    }
+
+    var hslString: String {
+        let components = NSColor(self).cgColor.components ?? []
+        let r = components[0]
+        let g = components[1]
+        let b = components[2]
+
+        let max = Swift.max(r, g, b)
+        let min = Swift.min(r, g, b)
+
+        var h: CGFloat = 0
+        var s: CGFloat = 0
+        let l = (max + min) / 2
+
+        if max != min {
+            let d = max - min
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+            switch max {
+            case r: h = (g - b) / d + (g < b ? 6 : 0)
+            case g: h = (b - r) / d + 2
+            case b: h = (r - g) / d + 4
+            default: break
+            }
+            h /= 6
+        }
+
+        return String(format: "HSL(%.0f°, %.0f%%, %.0f%%)", h * 360, s * 100, l * 100)
     }
 }
 
