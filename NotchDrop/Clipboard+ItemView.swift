@@ -1,6 +1,9 @@
 import SwiftUI
 import UniformTypeIdentifiers
 import AppKit
+import Quartz
+import QuickLook
+import QuickLookThumbnailing
 
 struct ClipboardItemView: View {
     let item: Clipboard.ClipboardItem
@@ -16,6 +19,7 @@ struct ClipboardItemView: View {
     @State private var isCopied = false
     @State private var isEditingLabels = false
     @State private var newLabel = ""
+    @State private var previewImage: NSImage?
 
     private let itemSize: CGFloat = 120
     private let cornerRadius: CGFloat = 16
@@ -184,6 +188,7 @@ struct ClipboardItemView: View {
         }
         .onAppear {
             updateFormattedTimeAgo()
+            generatePreviewImage()
         }
         .onReceive(Timer.publish(every: 60, on: .main, in: .common).autoconnect()) { _ in
             updateFormattedTimeAgo()
@@ -197,16 +202,18 @@ struct ClipboardItemView: View {
                 Text(item.previewText)
                     .lineLimit(3)
                     .frame(width: itemSize - 16, alignment: .center)
-            case .image:
-                Image(nsImage: item.workspacePreviewImage)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: itemSize - 16, height: 50)
-            case .file:
-                Image(nsImage: NSWorkspace.shared.icon(forFile: item.storageURL.path))
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 50, height: 50)
+            case .image, .file:
+                if let image = previewImage {
+                    Image(nsImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: itemSize - 16, height: 50)
+                } else {
+                    Image(nsImage: NSWorkspace.shared.icon(forFile: item.storageURL.path))
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 50, height: 50)
+                }
             case .link:
                 VStack {
                     Image(systemName: "link")
@@ -480,6 +487,32 @@ struct ClipboardItemView: View {
         let components = backgroundColor.cgColor?.components ?? [0, 0, 0, 0]
         let brightness = (components[0] * 299 + components[1] * 587 + components[2] * 114) / 1000
         return brightness > 0.5 ? .black : .white
+    }
+
+    func generatePreviewImage() {
+        guard item.itemType == .file || item.itemType == .image else { return }
+
+        let size = CGSize(width: 300, height: 300)
+        let scale = NSScreen.main?.backingScaleFactor ?? 1.0
+
+        let request = QLThumbnailGenerator.Request(
+            fileAt: item.storageURL,
+            size: size,
+            scale: scale,
+            representationTypes: .thumbnail)
+
+        QLThumbnailGenerator.shared.generateBestRepresentation(for: request) { thumbnail, error in
+            if let thumbnail = thumbnail {
+                DispatchQueue.main.async {
+                    self.previewImage = thumbnail.nsImage
+                }
+            } else {
+                print("Error generating thumbnail: \(error?.localizedDescription ?? "Unknown error")")
+                DispatchQueue.main.async {
+                    self.previewImage = NSWorkspace.shared.icon(forFile: item.storageURL.path)
+                }
+            }
+        }
     }
 }
 

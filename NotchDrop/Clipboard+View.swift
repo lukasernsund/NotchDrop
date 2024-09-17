@@ -401,6 +401,7 @@ struct ClipboardView: View {
                 } else {
                     Text(value)
                         .font(.subheadline)
+                        .lineLimit(1)
                 }
             }
         }
@@ -528,6 +529,7 @@ struct ClickableText: View {
 
     var body: some View {
         Text(text)
+            .lineLimit(1)
             .font(.subheadline)
             .foregroundColor(.blue)
             .underline(isHovered)
