@@ -1,7 +1,46 @@
 import AppKit
 import ColorfulX
+import Quartz
+import QuickLook
 import SwiftUI
 import UniformTypeIdentifiers
+
+struct QuickLookPreviewView: NSViewRepresentable {
+    var url: URL  // The URL to the file you want to preview
+
+    func makeNSView(context: Context) -> QLPreviewView {
+        let previewView = QLPreviewView(frame: .zero, style: .normal)
+        context.coordinator.previewView = previewView
+        return previewView ?? QLPreviewView()
+    }
+
+    func updateNSView(_ nsView: QLPreviewView, context: Context) {
+        context.coordinator.updatePreviewItem(url: url)
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    class Coordinator: NSObject, QLPreviewingController {
+        var parent: QuickLookPreviewView
+        var previewView: QLPreviewView?
+
+        init(_ parent: QuickLookPreviewView) {
+            self.parent = parent
+        }
+
+        func updatePreviewItem(url: URL) {
+            previewView?.previewItem = url as QLPreviewItem
+        }
+
+        func preparePreviewOfFile(
+            at url: URL, completionHandler handler: @escaping (Error?) -> Void
+        ) {
+            handler(nil)
+        }
+    }
+}
 
 struct ClipboardView: View {
     @ObservedObject var vm: NotchViewModel
@@ -11,6 +50,7 @@ struct ClipboardView: View {
     @State private var selectedFilters: Set<Clipboard.ClipboardItem.ItemType> = []
     @FocusState private var isSearchFocused: Bool
     @State private var isTrashHovered = false
+    @State private var selectedItemStorageURL: URL? = nil
 
     var storageTime: String {
         switch cvm.selectedFileStorageTime {
@@ -259,8 +299,8 @@ struct ClipboardView: View {
     func expandedInfoView(for item: Clipboard.ClipboardItem) -> some View {
         HStack(spacing: 20) {
             // Left side: Big preview
-            previewContent(for: item)
-                .frame(width: 300)
+            QuickLookPreviewView(url: item.storageURL)
+                .frame(width: 300, height: 200)
                 .background(Color.black.opacity(0.2))
                 .cornerRadius(10)
 
@@ -346,7 +386,9 @@ struct ClipboardView: View {
         .cornerRadius(vm.cornerRadius)
     }
 
-    func metadataRow(icon: String, title: String, value: String, action: (() -> Void)? = nil) -> some View {
+    func metadataRow(icon: String, title: String, value: String, action: (() -> Void)? = nil)
+        -> some View
+    {
         HStack {
             Image(systemName: icon)
                 .foregroundColor(.secondary)

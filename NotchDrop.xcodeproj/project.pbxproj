@@ -49,6 +49,7 @@
 		814AE5562C8E4A3E00F324D5 /* Clipboard+ItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814AE5532C8E4A3E00F324D5 /* Clipboard+ItemView.swift */; };
 		814AE5572C8E4A3E00F324D5 /* Clipboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814AE5512C8E4A3E00F324D5 /* Clipboard.swift */; };
 		814AE5582C8E4A3E00F324D5 /* Clipboard+View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814AE5542C8E4A3E00F324D5 /* Clipboard+View.swift */; };
+		8157035D2C9A170200B4694C /* QuickLook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8157035C2C9A170200B4694C /* QuickLook.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -89,6 +90,7 @@
 		814AE5522C8E4A3E00F324D5 /* Clipboard+ClipboardItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Clipboard+ClipboardItem.swift"; sourceTree = "<group>"; };
 		814AE5532C8E4A3E00F324D5 /* Clipboard+ItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Clipboard+ItemView.swift"; sourceTree = "<group>"; };
 		814AE5542C8E4A3E00F324D5 /* Clipboard+View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Clipboard+View.swift"; sourceTree = "<group>"; };
+		8157035C2C9A170200B4694C /* QuickLook.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickLook.framework; path = System/Library/Frameworks/QuickLook.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -96,6 +98,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8157035D2C9A170200B4694C /* QuickLook.framework in Frameworks */,
 				5044EEAD2C3B174100071C5C /* HashTreeCollections in Frameworks */,
 				5043819E2C3A8ACA000ED325 /* ColorfulX in Frameworks */,
 				5044EE9C2C3B082300071C5C /* Pow in Frameworks */,
@@ -173,6 +176,7 @@
 		504381AD2C3ADDAB000ED325 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				8157035C2C9A170200B4694C /* QuickLook.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
