@@ -1,5 +1,6 @@
 import SwiftUI
 import UniformTypeIdentifiers
+import AppKit
 
 struct ClipboardItemView: View {
     let item: Clipboard.ClipboardItem
@@ -17,7 +18,7 @@ struct ClipboardItemView: View {
     @State private var newLabel = ""
 
     private let itemSize: CGFloat = 120
-    private let cornerRadius: CGFloat = 8
+    private let cornerRadius: CGFloat = 16
     private let buttonSize: CGFloat = 24
 
     private var isSelected: Bool {
@@ -202,19 +203,10 @@ struct ClipboardItemView: View {
                     .aspectRatio(contentMode: .fit)
                     .frame(width: itemSize - 16, height: 50)
             case .file:
-                if let contentType = UTType(
-                    filenameExtension: URL(fileURLWithPath: item.fileName).pathExtension)
-                {
-                    Image(nsImage: NSWorkspace.shared.icon(for: contentType))
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 50, height: 50)
-                } else {
-                    Image(systemName: "doc")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 50, height: 50)
-                }
+                Image(nsImage: NSWorkspace.shared.icon(forFile: item.storageURL.path))
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 50, height: 50)
             case .link:
                 VStack {
                     Image(systemName: "link")
@@ -273,11 +265,6 @@ struct ClipboardItemView: View {
     }
 
     var copyButtonBackgroundColor: Color {
-        // if isAnyPartHovered {
-        //     return .white.opacity(0.1)
-        // } else {
-        //     return .white.opacity(0.0)
-        // }
         return .white.opacity(0.0)
     }
 
@@ -309,11 +296,6 @@ struct ClipboardItemView: View {
     }
 
     var deleteButtonBackgroundColor: Color {
-        // if isAnyPartHovered {
-        //     return .white.opacity(0.1)
-        // } else {
-        //     return .white.opacity(0.0)
-        // }
         return .white.opacity(0.0)
     }
 
@@ -347,11 +329,6 @@ struct ClipboardItemView: View {
     }
 
     var shareButtonBackgroundColor: Color {
-        // if isAnyPartHovered {
-        //     return .white.opacity(0.1)
-        // } else {
-        //     return .white.opacity(0.0)
-        // }
         return .white.opacity(0.0)
     }
 
@@ -386,11 +363,6 @@ struct ClipboardItemView: View {
     }
 
     var pinButtonBackgroundColor: Color {
-        // if isAnyPartHovered {
-        //     return .white.opacity(0.1)
-        // } else {
-        //     return .white.opacity(0.0)
-        // }
         return .white.opacity(0.0)
     }
 

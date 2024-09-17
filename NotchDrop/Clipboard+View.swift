@@ -300,7 +300,7 @@ struct ClipboardView: View {
         HStack(spacing: 20) {
             // Left side: Big preview
             QuickLookPreviewView(url: item.storageURL)
-                .frame(width: 300, height: 200)
+                .frame(width: 300, height: 300*1.414)
                 .background(Color.black.opacity(0.2))
                 .cornerRadius(10)
 

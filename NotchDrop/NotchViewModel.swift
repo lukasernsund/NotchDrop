@@ -84,11 +84,11 @@ class NotchViewModel: NSObject, ObservableObject {
     var selectedLanguage: Language
 
     let hapticSender = PassthroughSubject<Void, Never>()
-    
+
     @Published var clipboardItems: [ClipboardItem] = []
-    
+
     @Published var shouldScrollClipboardToStart: Bool = false
-    
+
     @Published var selectedClipboardItemID: UUID?
     @Published var isAnimatingClipboardSelection: Bool = false
 
@@ -129,7 +129,7 @@ class NotchViewModel: NSObject, ObservableObject {
     private func updateNotchSize() {
         switch contentType {
         case .clipboard:
-            notchOpenedSize = .init(width: 600, height: selectedClipboardItemID != nil ? 600 : 325)
+            notchOpenedSize = .init(width: 600, height: selectedClipboardItemID != nil ? 800 : 325)
         default:
             notchOpenedSize = .init(width: 600, height: 160)
         }
@@ -143,7 +143,9 @@ class NotchViewModel: NSObject, ObservableObject {
 
     private func checkClipboardChanges() {
         let pasteboard = NSPasteboard.general
-        if pasteboard.changeCount != UserDefaults.standard.integer(forKey: "LastPasteboardChangeCount") {
+        if pasteboard.changeCount
+            != UserDefaults.standard.integer(forKey: "LastPasteboardChangeCount")
+        {
             UserDefaults.standard.set(pasteboard.changeCount, forKey: "LastPasteboardChangeCount")
             updateClipboardItems()
         }
@@ -184,7 +186,7 @@ class NotchViewModel: NSObject, ObservableObject {
             }
             updateNotchSize()
         }
-        
+
         // Reset the animation flag after a short delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             self.isAnimatingClipboardSelection = false
