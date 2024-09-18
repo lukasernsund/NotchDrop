@@ -40,7 +40,8 @@ struct ClipboardItemView: View {
                 if item.itemType == .color, let color = Color(hex: item.previewText) {
                     return color
                 } else {
-                    return Color.gray.opacity(0.2)
+                    // return Color.gray.opacity(0.2)
+                    return Color.gray.opacity(0.0)
                 }
             }
             var foregroundColor: Color {
@@ -80,7 +81,8 @@ struct ClipboardItemView: View {
                     .stroke(
                         LinearGradient(
                             gradient: Gradient(colors: [
-                                isAnyPartHovered ? color.opacity(0) : color.opacity(0.5),
+                                // isAnyPartHovered ? color.opacity(0) : color.opacity(0.5),
+                                isAnyPartHovered ? color.opacity(0) : color.opacity(0.0),
                                 color.opacity(0),
                             ]),
                             startPoint: .topLeading,
