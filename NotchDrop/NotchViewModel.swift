@@ -98,6 +98,11 @@ class NotchViewModel: NSObject, ObservableObject {
         status = .opened
         shouldScrollClipboardToStart = true
         updateNotchSize()
+        
+        // Call makeKeyAndOrderFront to ensure the window receives focus
+        DispatchQueue.main.async {
+            NSApp.delegate?.makeKeyAndOrderFront()
+        }
     }
 
     func notchClose() {

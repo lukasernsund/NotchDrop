@@ -33,7 +33,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             repeats: true
         ) { [weak self] _ in
             self?.determineIfProcessIdentifierMatches()
-            self?.makeKeyAndVisibleIfNeeded()
         }
         self.timer = timer
 
@@ -75,13 +74,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    func makeKeyAndVisibleIfNeeded() {
+    func makeKeyAndOrderFront() {
         guard let controller = mainWindowController,
-            let window = controller.window,
-            let vm = controller.vm,
-            vm.status == .opened
+              let window = controller.window
         else { return }
         window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     func applicationShouldHandleReopen(_: NSApplication, hasVisibleWindows _: Bool) -> Bool {
@@ -89,6 +87,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let vm = controller.vm
         else { return true }
         vm.notchOpen(.click)
+        makeKeyAndOrderFront()
         return true
+    }
+}
+
+// Extension to make the makeKeyAndOrderFront() function accessible to NotchViewModel
+extension NSApplicationDelegate {
+    func makeKeyAndOrderFront() {
+        (self as? AppDelegate)?.makeKeyAndOrderFront()
     }
 }
