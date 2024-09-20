@@ -23,8 +23,9 @@ extension NotchViewModel {
                     // touch outside, close
                     if !notchOpenedRect.contains(mouseLocation) {
                         notchClose()
-                    // click where user open the panel
-                    } else if deviceNotchRect.insetBy(dx: inset, dy: inset).contains(mouseLocation) {
+                        // click where user open the panel
+                    } else if deviceNotchRect.insetBy(dx: inset, dy: inset).contains(mouseLocation)
+                    {
                         notchClose()
                     } else if headlineOpenedRect.contains(mouseLocation) {
                         // Handle header tap without changing the page
@@ -52,7 +53,8 @@ extension NotchViewModel {
             .sink { [weak self] mouseLocation in
                 guard let self else { return }
                 let mouseLocation: NSPoint = NSEvent.mouseLocation
-                let aboutToOpen = deviceNotchRect.insetBy(dx: inset, dy: inset).contains(mouseLocation)
+                let aboutToOpen = deviceNotchRect.insetBy(dx: inset, dy: inset).contains(
+                    mouseLocation)
                 if status == .closed, aboutToOpen { notchPop() }
                 if status == .popping, !aboutToOpen { notchClose() }
             }
@@ -75,11 +77,11 @@ extension NotchViewModel {
             }
             .store(in: &cancellables)
 
-        hapticSender
-            .throttle(for: .seconds(0.5), scheduler: DispatchQueue.main, latest: false)
+                hapticSender
+            .throttle(for: .seconds(0.05), scheduler: DispatchQueue.main, latest: false)
             .sink { _ in
                 NSHapticFeedbackManager.defaultPerformer.perform(
-                    .levelChange,
+                    .generic, // Changed to .generic for even softer feedback
                     performanceTime: .now
                 )
             }
