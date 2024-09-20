@@ -116,7 +116,7 @@ struct ClipboardView: View {
     }
     var body: some View {
         ZStack {
-            VStack {  // Add spacing between main elements
+            VStack() {  // Add spacing between main elements
                 HStack(spacing: 0) {
                     Text("Clipboard")
                         .font(.title)
@@ -141,7 +141,7 @@ struct ClipboardView: View {
                     }
                     .animation(vm.animation, value: isTrashHovered)
                 }
-                HStack() {  // Add spacing between search bar and filter options
+                HStack {  // Add spacing between search bar and filter options
                     searchBar
                         .padding(.horizontal, vm.spacing / 4)
 
@@ -293,7 +293,7 @@ struct ClipboardView: View {
                         .foregroundColor(colorForType(item.itemType))
                     Spacer()
                     Button(action: {
-                        vm.selectClipboardItem(nil)  // Close the detailed view
+                        vm.closeExpandedView()  // Use the new closeExpandedView() function
                     }) {
                         Image(systemName: "chevron.up")
                             .foregroundColor(.white)
@@ -371,7 +371,7 @@ struct ClipboardView: View {
 
                             Button("Delete") {
                                 cvm.delete(item.id)
-                                vm.selectClipboardItem(nil)
+                                vm.closeExpandedView()  // Use the new closeExpandedView() function
                             }
                             .buttonStyle(.bordered)
                             .foregroundColor(.red)
@@ -414,7 +414,7 @@ struct ClipboardView: View {
                 return image.size.width / image.size.height
             }
         case .color:
-            return 1.0  // Square aspect ratio for color
+            return 32.0 / 9.0  // Square aspect ratio for color
         case .text, .link:
             return 16.0 / 9.0  // Default aspect ratio for text and links
         }

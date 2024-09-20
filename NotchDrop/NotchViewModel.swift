@@ -154,7 +154,8 @@ class NotchViewModel: NSObject, ObservableObject {
                 notchOpenedSize = .init(width: 600, height: min(800, maxHeight))
             } else {
                 let newHeight = max(contentHeight, defaultClipboardHeight)
-                notchOpenedSize = .init(width: 600, height: min(max(newHeight, minHeight), maxHeight))
+                notchOpenedSize = .init(
+                    width: 600, height: min(max(newHeight, minHeight), maxHeight))
             }
         case .menu:
             notchOpenedSize = .init(width: 600, height: airDropHeight)
@@ -207,8 +208,7 @@ class NotchViewModel: NSObject, ObservableObject {
         isAnimatingClipboardSelection = true
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
             if selectedClipboardItemID == id {
-                selectedClipboardItemID = nil
-                contentHeight = defaultClipboardHeight  // Reset to default height when collapsing
+                closeExpandedView()
             } else {
                 selectedClipboardItemID = id
             }
@@ -218,6 +218,13 @@ class NotchViewModel: NSObject, ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             self.isAnimatingClipboardSelection = false
         }
+    }
+
+    // New function to handle closing the expanded view
+    func closeExpandedView() {
+        selectedClipboardItemID = nil
+        contentHeight = defaultClipboardHeight
+        updateNotchSize()
     }
 
     // New function to update content height
