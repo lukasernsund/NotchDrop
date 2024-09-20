@@ -40,7 +40,6 @@ struct ClipboardItemView: View {
                 if item.itemType == .color, let color = Color(hex: item.previewText) {
                     return color
                 } else {
-                    // return Color.gray.opacity(0.2)
                     return Color.gray.opacity(0.0)
                 }
             }

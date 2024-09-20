@@ -51,6 +51,7 @@
 		814AE5582C8E4A3E00F324D5 /* Clipboard+View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814AE5542C8E4A3E00F324D5 /* Clipboard+View.swift */; };
 		8157035D2C9A170200B4694C /* QuickLook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8157035C2C9A170200B4694C /* QuickLook.framework */; };
 		8157035F2C9A285E00B4694C /* QuickLookThumbnailing.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8157035E2C9A285E00B4694C /* QuickLookThumbnailing.framework */; };
+		815703612C9B434A00B4694C /* ExpandingSearchBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 815703602C9B434A00B4694C /* ExpandingSearchBar.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -93,6 +94,7 @@
 		814AE5542C8E4A3E00F324D5 /* Clipboard+View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Clipboard+View.swift"; sourceTree = "<group>"; };
 		8157035C2C9A170200B4694C /* QuickLook.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickLook.framework; path = System/Library/Frameworks/QuickLook.framework; sourceTree = SDKROOT; };
 		8157035E2C9A285E00B4694C /* QuickLookThumbnailing.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickLookThumbnailing.framework; path = System/Library/PrivateFrameworks/QuickLookThumbnailing.framework; sourceTree = SDKROOT; };
+		815703602C9B434A00B4694C /* ExpandingSearchBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpandingSearchBar.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -143,6 +145,7 @@
 				504381872C3A86EC000ED325 /* Assets.xcassets */,
 				504381922C3A8755000ED325 /* main.swift */,
 				5043819A2C3A8A06000ED325 /* AppDelegate.swift */,
+				815703602C9B434A00B4694C /* ExpandingSearchBar.swift */,
 				501F0E8B2C59E6BD00F0113C /* Language.swift */,
 				504381982C3A8893000ED325 /* NotchWindow.swift */,
 				504381A32C3A8C7E000ED325 /* NotchWindowController.swift */,
@@ -302,6 +305,7 @@
 				501F0E8C2C59E6BD00F0113C /* Language.swift in Sources */,
 				5043819B2C3A8A06000ED325 /* AppDelegate.swift in Sources */,
 				504381932C3A8755000ED325 /* main.swift in Sources */,
+				815703612C9B434A00B4694C /* ExpandingSearchBar.swift in Sources */,
 				60AD62872C579F4400299297 /* NotchSettingsView.swift in Sources */,
 				504381A82C3A926E000ED325 /* NotchViewModel.swift in Sources */,
 				5044EEA02C3B116000071C5C /* PublishedPersist.swift in Sources */,
