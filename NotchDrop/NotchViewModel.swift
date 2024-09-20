@@ -92,14 +92,19 @@ class NotchViewModel: NSObject, ObservableObject {
     @Published var selectedClipboardItemID: UUID?
     @Published var isAnimatingClipboardSelection: Bool = false
 
+    // New property to store the content height
+    @Published var contentHeight: CGFloat = 160
+
+    // Fixed heights for TrayDrop and AirDrop
+    let trayDropHeight: CGFloat = 160
+    let airDropHeight: CGFloat = 160
+
     func notchOpen(_ reason: OpenReason) {
-        // contentType = .drop// Always set to Drop page when opening
         openReason = reason
         status = .opened
         shouldScrollClipboardToStart = true
         updateNotchSize()
-        
-        // Call makeKeyAndOrderFront to ensure the window receives focus
+
         DispatchQueue.main.async {
             NSApp.delegate?.makeKeyAndOrderFront()
         }
@@ -109,6 +114,8 @@ class NotchViewModel: NSObject, ObservableObject {
         openReason = .unknown
         status = .closed
         selectedClipboardItemID = nil
+        contentHeight = deviceNotchRect.height
+        updateNotchSize()
     }
 
     func showSettings() {
@@ -122,6 +129,7 @@ class NotchViewModel: NSObject, ObservableObject {
 
     func switchPage(to page: ContentType) {
         contentType = page
+        updateNotchSize()
     }
 
     func showDropPage() {
@@ -131,12 +139,21 @@ class NotchViewModel: NSObject, ObservableObject {
         }
     }
 
-    private func updateNotchSize() {
+    func updateNotchSize() {
+        let maxHeight: CGFloat = 1000
+        let minHeight: CGFloat = max(deviceNotchRect.height, 160)
+
         switch contentType {
+        case .drop:
+            notchOpenedSize = .init(width: 600, height: trayDropHeight)
         case .clipboard:
-            notchOpenedSize = .init(width: 600, height: selectedClipboardItemID != nil ? 800 : 325)
-        default:
-            notchOpenedSize = .init(width: 600, height: 160)
+            let newHeight = selectedClipboardItemID != nil ? 800 : max(contentHeight, 325)
+            notchOpenedSize = .init(width: 600, height: min(max(newHeight, minHeight), maxHeight))
+        case .menu:
+            notchOpenedSize = .init(width: 600, height: airDropHeight)
+        case .settings:
+            notchOpenedSize = .init(
+                width: 600, height: min(max(contentHeight, minHeight), maxHeight))
         }
     }
 
@@ -183,19 +200,22 @@ class NotchViewModel: NSObject, ObservableObject {
         isAnimatingClipboardSelection = true
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
             if selectedClipboardItemID == id {
-                // If the tapped item is already selected, deselect it
                 selectedClipboardItemID = nil
             } else {
-                // Otherwise, select the tapped item
                 selectedClipboardItemID = id
             }
             updateNotchSize()
         }
 
-        // Reset the animation flag after a short delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             self.isAnimatingClipboardSelection = false
         }
+    }
+
+    // New function to update content height
+    func updateContentHeight(_ height: CGFloat) {
+        contentHeight = height
+        updateNotchSize()
     }
 }
 

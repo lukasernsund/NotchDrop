@@ -203,6 +203,7 @@ struct ClipboardItemView: View {
                 Text(item.previewText)
                     .lineLimit(3)
                     .frame(width: itemSize - 16, alignment: .center)
+                    .font(.callout)
             case .image, .file:
                 if let image = previewImage {
                     Image(nsImage: image)

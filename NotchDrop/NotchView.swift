@@ -1,10 +1,3 @@
-//
-//  NotchView.swift
-//  NotchDrop
-//
-//  Created by 秋星桥 on 2024/7/7.
-//
-
 import SwiftUI
 
 struct NotchView: View {
@@ -16,13 +9,10 @@ struct NotchView: View {
     var notchSize: CGSize {
         switch vm.status {
         case .closed:
-            var ans = CGSize(
+            return CGSize(
                 width: vm.deviceNotchRect.width - 4,
                 height: vm.deviceNotchRect.height - 4
             )
-            if ans.width < 0 { ans.width = 0 }
-            if ans.height < 0 { ans.height = 0 }
-            return ans
         case .opened:
             return vm.notchOpenedSize
         case .popping:
@@ -51,8 +41,13 @@ struct NotchView: View {
                 if vm.status == .opened {
                     VStack(spacing: vm.spacing) {
                         NotchHeaderView(vm: vm)
-                        NotchContentView(vm: vm)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        GeometryReader { geometry in
+                            NotchContentView(vm: vm)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .onChange(of: geometry.size) { newSize in
+                                    vm.updateContentHeight(newSize.height)
+                                }
+                        }
                     }
                     .padding(vm.spacing)
                     .frame(maxWidth: vm.notchOpenedSize.width, maxHeight: vm.notchOpenedSize.height)
@@ -69,6 +64,7 @@ struct NotchView: View {
         }
         .background(dragDetecter)
         .animation(vm.animation, value: vm.status)
+        .animation(vm.animation, value: vm.notchOpenedSize)
         .preferredColorScheme(.dark)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .onHover { hovering in
@@ -79,7 +75,7 @@ struct NotchView: View {
             if !hovering {
                 // Check if the mouse is genuinely outside the notch's bounds
                 let mouseLocation = NSEvent.mouseLocation
-                if !NSPointInRect(mouseLocation, NSRect(x: 0, y: 0, width: notchSize.width, height: notchSize.height)) {
+                if !NSPointInRect(mouseLocation, NSRect(origin: .zero, size: notchSize)) {
                     vm.notchPop()
                 }
             }
