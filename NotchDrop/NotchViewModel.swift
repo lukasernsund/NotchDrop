@@ -99,6 +99,9 @@ class NotchViewModel: NSObject, ObservableObject {
     let trayDropHeight: CGFloat = 160
     let airDropHeight: CGFloat = 160
 
+    // New property to store the default clipboard height
+    let defaultClipboardHeight: CGFloat = 325
+
     func notchOpen(_ reason: OpenReason) {
         openReason = reason
         status = .opened
@@ -147,8 +150,12 @@ class NotchViewModel: NSObject, ObservableObject {
         case .drop:
             notchOpenedSize = .init(width: 600, height: trayDropHeight)
         case .clipboard:
-            let newHeight = selectedClipboardItemID != nil ? 800 : max(contentHeight, 325)
-            notchOpenedSize = .init(width: 600, height: min(max(newHeight, minHeight), maxHeight))
+            if selectedClipboardItemID != nil {
+                notchOpenedSize = .init(width: 600, height: min(800, maxHeight))
+            } else {
+                let newHeight = max(contentHeight, defaultClipboardHeight)
+                notchOpenedSize = .init(width: 600, height: min(max(newHeight, minHeight), maxHeight))
+            }
         case .menu:
             notchOpenedSize = .init(width: 600, height: airDropHeight)
         case .settings:
@@ -201,6 +208,7 @@ class NotchViewModel: NSObject, ObservableObject {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
             if selectedClipboardItemID == id {
                 selectedClipboardItemID = nil
+                contentHeight = defaultClipboardHeight  // Reset to default height when collapsing
             } else {
                 selectedClipboardItemID = id
             }

@@ -116,13 +116,13 @@ struct ClipboardView: View {
     }
     var body: some View {
         ZStack {
-            VStack(spacing: 0) {
+            VStack {  // Add spacing between main elements
                 HStack(spacing: 0) {
                     Text("Clipboard")
                         .font(.title)
                         .fontWeight(.bold)
                         .padding(.leading, vm.spacing)
-                        .padding(.vertical, vm.spacing / 4)
+                        .padding(.vertical, vm.spacing / 4)  // Increase vertical padding
 
                     Spacer()
 
@@ -132,7 +132,7 @@ struct ClipboardView: View {
                         Image(systemName: "trash")
                             .font(.title2)
                             .padding(.trailing, vm.spacing)
-                            .padding(.vertical, vm.spacing / 4)
+                            .padding(.vertical, vm.spacing / 4)  // Increase vertical padding
                             .scaleEffect(isTrashHovered ? 1.2 : 1.0)
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -141,20 +141,17 @@ struct ClipboardView: View {
                     }
                     .animation(vm.animation, value: isTrashHovered)
                 }
-                HStack(spacing: 0) {
+                HStack() {  // Add spacing between search bar and filter options
                     searchBar
-                        .padding(.leading, vm.spacing)
-
-                    Spacer(minLength: 0)
+                        .padding(.horizontal, vm.spacing / 4)
 
                     filterOptions
-                        .padding(.trailing, vm.spacing)
                 }
-                .frame(height: 36)  // Match the height of ExpandingSearchBar
+                .padding(.vertical, vm.spacing / 2)  // Add vertical padding
                 .background(Color.black)
 
                 panel
-                detailedView
+                vm.selectedClipboardItemID == nil ? nil : detailedView
             }
             .onTapGesture {
                 if isSearchExpanded {
@@ -169,14 +166,6 @@ struct ClipboardView: View {
     }
     var panel: some View {
         ZStack {
-            ColorfulView(
-                color: .constant(ColorfulPreset.starry.colors),
-                speed: .constant(0.5),
-                transitionSpeed: .constant(50)
-            )
-            .opacity(0.0)
-            .clipShape(RoundedRectangle(cornerRadius: vm.cornerRadius))
-
             RoundedRectangle(cornerRadius: vm.cornerRadius)
                 .foregroundStyle(.white.opacity(0.0))
                 .overlay {
@@ -425,11 +414,11 @@ struct ClipboardView: View {
                 return image.size.width / image.size.height
             }
         case .color:
-            return 1.0 // Square aspect ratio for color
+            return 1.0  // Square aspect ratio for color
         case .text, .link:
-            return 16.0 / 9.0 // Default aspect ratio for text and links
+            return 16.0 / 9.0  // Default aspect ratio for text and links
         }
-        return 16.0 / 9.0 // Default aspect ratio if we can't determine
+        return 16.0 / 9.0  // Default aspect ratio if we can't determine
     }
 
     func calculatePreviewHeight(for item: Clipboard.ClipboardItem, in geometry: GeometryProxy)
