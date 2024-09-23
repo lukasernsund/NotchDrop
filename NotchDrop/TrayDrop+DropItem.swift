@@ -12,28 +12,42 @@ import QuickLook
 extension TrayDrop {
     struct DropItem: Identifiable, Codable, Equatable, Hashable {
         let id: UUID
-
         let fileName: String
         let size: Int
-
         let copiedDate: Date
         let workspacePreviewImageData: Data
-
+        
         init(url: URL) throws {
-            assert(!Thread.isMainThread)
-
             id = UUID()
             fileName = url.lastPathComponent
-
-            size = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
             copiedDate = Date()
-            workspacePreviewImageData = url.snapshotPreview().pngRepresentation
-
+            
+            // Perform potentially slow operations on a background queue
+            let (size, previewData) = try DropItem.backgroundOperations(for: url)
+            self.size = size
+            self.workspacePreviewImageData = previewData
+            
             try FileManager.default.createDirectory(
-                at: storageURL.deletingLastPathComponent(),
+                at: Self.storageDirectoryURL,
                 withIntermediateDirectories: true
             )
-            try FileManager.default.copyItem(at: url, to: storageURL)
+            
+            // Check if the file already exists in the storage directory
+            let destinationURL = Self.storageDirectoryURL.appendingPathComponent(fileName)
+            if FileManager.default.fileExists(atPath: destinationURL.path) {
+                // File already exists, no need to copy
+                print("File already exists in storage: \(fileName)")
+            } else {
+                // File doesn't exist, copy it
+                try FileManager.default.copyItem(at: url, to: destinationURL)
+                print("File copied to storage: \(fileName)")
+            }
+        }
+        
+        private static func backgroundOperations(for url: URL) throws -> (Int, Data) {
+            let size = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
+            let previewData = url.snapshotPreview().pngRepresentation
+            return (size, previewData)
         }
     }
 }
@@ -41,11 +55,12 @@ extension TrayDrop {
 extension TrayDrop.DropItem {
     static let mainDir = "CopiedItems"
 
+    static var storageDirectoryURL: URL {
+        documentsDirectory.appendingPathComponent(Self.mainDir)
+    }
+
     var storageURL: URL {
-        documentsDirectory
-            .appendingPathComponent(Self.mainDir)
-            .appendingPathComponent(id.uuidString)
-            .appendingPathComponent(fileName)
+        Self.storageDirectoryURL.appendingPathComponent(fileName)
     }
 
     var workspacePreviewImage: NSImage {
