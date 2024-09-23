@@ -116,7 +116,7 @@ struct ClipboardView: View {
     }
     var body: some View {
         ZStack {
-            VStack() {  // Add spacing between main elements
+            VStack {  // Add spacing between main elements
                 HStack(spacing: 0) {
                     Text("Clipboard")
                         .font(.title)
@@ -227,7 +227,7 @@ struct ClipboardView: View {
 
     var filterOptions: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
+            HStack(spacing: 4) {  // Reduced spacing
                 ForEach(Clipboard.ClipboardItem.ItemType.allCases, id: \.self) { type in
                     if presentItemTypes.contains(type) {
                         FilterChip(
@@ -245,9 +245,11 @@ struct ClipboardView: View {
                     }
                 }
             }
-            .padding(.leading, isSearchExpanded ? 8 : 0)
+            .padding(.vertical, 8)  // Increased vertical padding
+            .padding(.horizontal, 12)  // Increased horizontal padding
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
+        .padding(.leading, isSearchExpanded ? 8 : 0)
     }
 
     var emptyView: some View {
@@ -617,6 +619,7 @@ struct FilterChip: View {
     let isSelected: Bool
     let color: Color
     let action: () -> Void
+    @State private var isHovered = false
 
     var body: some View {
         Button(action: action) {
@@ -624,11 +627,26 @@ struct FilterChip: View {
                 .font(.caption)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 4)
-                .background(isSelected ? color.opacity(0.2) : Color.gray.opacity(0.1))
-                .foregroundColor(isSelected ? color : .primary.opacity(0.5))
+                .background(
+                    isSelected && isHovered
+                        ? color.opacity(0.3)
+                        : isSelected
+                            ? color.opacity(0.2)
+                            : isHovered ? Color.gray.opacity(0.2) : Color.gray.opacity(0.1)
+                )
+                .foregroundColor(
+                    isSelected && isHovered ? .primary :
+                    isSelected ? color : isHovered ? .primary : .primary.opacity(0.5)
+                )
                 .cornerRadius(12)
         }
         .buttonStyle(PlainButtonStyle())
+        .scaleEffect(isHovered ? 1.1 : 1.0)  // Reduced scale effect
+        .animation(.easeInOut(duration: 0.2), value: isHovered)
+        .onHover { hovering in
+            isHovered = hovering
+        }
+        .padding(4)  // Add padding around the entire button
     }
 }
 
